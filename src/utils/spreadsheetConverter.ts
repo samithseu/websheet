@@ -206,14 +206,39 @@ export function xSpreadsheetToWorkbook(sdata: XSpreadsheetData): XLSX.WorkBook {
 
         // Formula check
         if (textStr.startsWith('=')) {
-          const calcVal = cell.value !== undefined && cell.value !== null && !isNaN(Number(cell.value))
-            ? Number(cell.value)
-            : 0;
-          ws[cellRef] = {
-            t: 'n',
-            f: textStr.slice(1),
-            v: calcVal,
-          };
+          const formula = textStr.slice(1);
+          if (cell.value !== undefined && cell.value !== null && cell.value !== '') {
+            if (typeof cell.value === 'boolean') {
+              ws[cellRef] = {
+                t: 'b',
+                f: formula,
+                v: cell.value,
+              };
+            } else if (typeof cell.value === 'number') {
+              ws[cellRef] = {
+                t: 'n',
+                f: formula,
+                v: cell.value,
+              };
+            } else if (typeof cell.value === 'string') {
+              ws[cellRef] = {
+                t: 's',
+                f: formula,
+                v: cell.value,
+              };
+            } else {
+              const num = Number(cell.value);
+              ws[cellRef] = isNaN(num)
+                ? { t: 's', f: formula, v: String(cell.value) }
+                : { t: 'n', f: formula, v: num };
+            }
+          } else {
+            ws[cellRef] = {
+              t: 'n',
+              f: formula,
+              v: 0,
+            };
+          }
         } else if (!isNaN(Number(textStr)) && textStr !== '') {
           ws[cellRef] = {
             t: 'n',
@@ -324,7 +349,7 @@ export function workbookToXlsxBlob(wb: XLSX.WorkBook): Blob {
  * Exports active sheet or first sheet as CSV blob
  */
 export function workbookToCsvBlob(wb: XLSX.WorkBook, sheetName?: string): Blob {
-  const targetSheetName = sheetName || wb.SheetNames[0];
+  const targetSheetName = sheetName && wb.Sheets[sheetName] ? sheetName : wb.SheetNames[0];
   const ws = wb.Sheets[targetSheetName];
   if (!ws) {
     return new Blob([''], { type: 'text/csv;charset=utf-8;' });
@@ -353,7 +378,7 @@ export function workbookToJsonBlob(wb: XLSX.WorkBook, sheetName?: string): Blob 
  * Exports active sheet as HTML Table string
  */
 export function workbookToHtmlBlob(wb: XLSX.WorkBook, sheetName?: string): Blob {
-  const targetSheetName = sheetName || wb.SheetNames[0];
+  const targetSheetName = sheetName && wb.Sheets[sheetName] ? sheetName : wb.SheetNames[0];
   const ws = wb.Sheets[targetSheetName];
   if (!ws) {
     return new Blob(['<table></table>'], { type: 'text/html;charset=utf-8;' });
@@ -364,9 +389,10 @@ export function workbookToHtmlBlob(wb: XLSX.WorkBook, sheetName?: string): Blob 
   <meta charset="utf-8">
   <title>${targetSheetName}</title>
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; margin: 2rem; background: #f8fafc; }
-    table { border-collapse: collapse; width: 100%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 6px; overflow: hidden; }
-    td, th { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; font-size: 14px; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 2rem; background: #f8fafc; color: #0f172a; }
+    table { border-collapse: collapse; width: 100%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
+    td, th { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; font-size: 13px; }
+    th { background: #f1f5f9; font-weight: 600; }
     tr:nth-child(even) { background: #f8fafc; }
   </style>
 </head>

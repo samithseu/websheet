@@ -60,7 +60,7 @@ export const FormulaBar: React.FC<FormulaBarProps> = ({
       <div className="flex items-center gap-1.5 flex-1 max-w-4xl min-w-0">
         {/* Cell Coordinate Badge */}
         <div
-          className="h-6 px-2.5 bg-slate-100 border border-slate-200 rounded font-mono font-semibold text-slate-700 flex items-center justify-center min-w-13.5 text-center"
+          className="h-6 px-2.5 bg-slate-50 border border-slate-200 rounded-md font-mono font-semibold text-slate-700 flex items-center justify-center min-w-13 text-center"
           title="Active cell reference"
         >
           {activeCellCoord || 'A1'}
@@ -68,8 +68,9 @@ export const FormulaBar: React.FC<FormulaBarProps> = ({
 
         {/* fx button */}
         <button
+          type="button"
           onClick={onOpenFormulaGuide}
-          className="h-6 px-2 rounded text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-serif font-bold text-xs flex items-center justify-center border border-emerald-200 transition-colors"
+          className="h-6 px-2 rounded-md text-blue-600 bg-blue-50 hover:bg-blue-100 font-semibold text-xs flex items-center justify-center border border-blue-200 transition-colors cursor-pointer"
           title="Insert formula or open reference guide"
         >
           fx
@@ -85,32 +86,32 @@ export const FormulaBar: React.FC<FormulaBarProps> = ({
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
           placeholder="Enter text, number, or formula starting with '='"
-          className="flex-1 h-6 px-2 text-xs font-mono text-slate-800 bg-white border border-slate-200 rounded focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-400"
+          className="flex-1 h-6.5 px-2 text-xs font-mono text-slate-800 bg-white border border-slate-200 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-slate-400 placeholder:font-sans"
         />
       </div>
 
       {/* Right: Selection Quick Statistics */}
       {selectionStats && selectionStats.count > 1 && (
-        <div className="hidden lg:flex items-center gap-2 text-[11px] text-slate-600 bg-slate-50 px-2.5 py-1 rounded border border-slate-200 shrink-0 font-medium">
+        <div className="hidden lg:flex items-center gap-2 text-[11px] text-slate-600 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200 shrink-0 font-medium">
           <span>
-            Count: <strong className="font-semibold text-slate-800">{selectionStats.count}</strong>
+            Count: <strong className="font-semibold text-slate-800 font-mono">{selectionStats.count}</strong>
           </span>
 
           {selectionStats.numericCount > 0 && (
             <>
-              <div className="h-3 w-px bg-slate-300" />
+              <div className="h-3 w-px bg-slate-200" />
               <span>
-                Sum: <strong className="font-semibold text-emerald-700 font-mono">{formatNumber(selectionStats.sum)}</strong>
+                Sum: <strong className="font-semibold text-blue-700 font-mono">{formatNumber(selectionStats.sum)}</strong>
               </span>
-              <div className="h-3 w-px bg-slate-300" />
+              <div className="h-3 w-px bg-slate-200" />
               <span>
                 Avg: <strong className="font-semibold text-slate-800 font-mono">{formatNumber(selectionStats.avg)}</strong>
               </span>
-              <div className="h-3 w-px bg-slate-300" />
+              <div className="h-3 w-px bg-slate-200" />
               <span>
                 Min: <strong className="font-semibold text-slate-800 font-mono">{formatNumber(selectionStats.min)}</strong>
               </span>
-              <div className="h-3 w-px bg-slate-300" />
+              <div className="h-3 w-px bg-slate-200" />
               <span>
                 Max: <strong className="font-semibold text-slate-800 font-mono">{formatNumber(selectionStats.max)}</strong>
               </span>

@@ -3,6 +3,7 @@ import 'x-data-spreadsheet';
 import * as XLSX from 'xlsx';
 import type { XSpreadsheetData } from '../utils/spreadsheetConverter';
 import type { SelectionStats } from './FormulaBar';
+import { getSpreadsheetFactory, type XSpreadsheetInstance } from '../types/spreadsheet';
 
 export interface SpreadsheetGridRef {
   loadData: (data: XSpreadsheetData) => void;
@@ -13,6 +14,8 @@ export interface SpreadsheetGridRef {
   clearCurrentSheet: () => void;
   reRender: () => void;
   selectCell: (sheetIndex: number, rowIndex: number, colIndex: number) => void;
+  getActiveSheetName: () => string;
+  getActiveSheetIndex: () => number;
 }
 
 interface SpreadsheetGridProps {
@@ -33,82 +36,106 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
     ref
   ) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const spreadsheetInstanceRef = useRef<any>(null);
+    const spreadsheetInstanceRef = useRef<XSpreadsheetInstance | null>(null);
     const activeCellPosRef = useRef<{ r: number; c: number }>({ r: 0, c: 0 });
+
+    // Initial data captured for mount only (per AGENTS.md)
+    const initialDataRef = useRef(initialData);
+
+    // Stable references to callbacks updated outside render
+    const onDataChangeRef = useRef(onDataChange);
+    const onActiveCellChangeRef = useRef(onActiveCellChange);
+    const onSelectionStatsChangeRef = useRef(onSelectionStatsChange);
+
+    useEffect(() => {
+      onDataChangeRef.current = onDataChange;
+      onActiveCellChangeRef.current = onActiveCellChange;
+      onSelectionStatsChangeRef.current = onSelectionStatsChange;
+    });
 
     // Expose handles to parent
     useImperativeHandle(ref, () => ({
       loadData: (data: XSpreadsheetData) => {
         if (spreadsheetInstanceRef.current) {
           spreadsheetInstanceRef.current.loadData(data);
-          onDataChange(spreadsheetInstanceRef.current.getData());
+          onDataChangeRef.current(spreadsheetInstanceRef.current.getData());
         }
       },
       getData: () => {
         if (spreadsheetInstanceRef.current) {
-          return spreadsheetInstanceRef.current.getData() as XSpreadsheetData;
+          return spreadsheetInstanceRef.current.getData();
         }
-        return initialData;
+        return initialDataRef.current;
       },
       setCellText: (rowIndex: number, colIndex: number, text: string) => {
         if (spreadsheetInstanceRef.current) {
           spreadsheetInstanceRef.current.cellText(rowIndex, colIndex, text);
           spreadsheetInstanceRef.current.reRender();
-          onDataChange(spreadsheetInstanceRef.current.getData());
+          onDataChangeRef.current(spreadsheetInstanceRef.current.getData());
         }
       },
       undo: () => {
-        if (spreadsheetInstanceRef.current?.sheet?.undo) {
-          spreadsheetInstanceRef.current.sheet.undo();
-        }
+        spreadsheetInstanceRef.current?.sheet?.undo?.();
       },
       redo: () => {
-        if (spreadsheetInstanceRef.current?.sheet?.redo) {
-          spreadsheetInstanceRef.current.sheet.redo();
-        }
+        spreadsheetInstanceRef.current?.sheet?.redo?.();
       },
       clearCurrentSheet: () => {
-        if (spreadsheetInstanceRef.current?.sheet?.data) {
+        if (spreadsheetInstanceRef.current?.sheet?.data?.rows) {
           spreadsheetInstanceRef.current.sheet.data.rows.clear();
           spreadsheetInstanceRef.current.reRender();
-          onDataChange(spreadsheetInstanceRef.current.getData());
+          onDataChangeRef.current(spreadsheetInstanceRef.current.getData());
         }
       },
       reRender: () => {
-        if (spreadsheetInstanceRef.current?.sheet?.reload) {
-          spreadsheetInstanceRef.current.sheet.reload();
-        }
+        spreadsheetInstanceRef.current?.sheet?.reload?.();
       },
       selectCell: (sheetIndex: number, rowIndex: number, colIndex: number) => {
-        if (spreadsheetInstanceRef.current) {
-          // If sheet index is different, switch sheet if possible
-          const bottombar = spreadsheetInstanceRef.current.bottombar;
-          if (bottombar && bottombar.menu && bottombar.menu.items) {
+        const s = spreadsheetInstanceRef.current;
+        if (s) {
+          // Switch sheet tab if requested
+          const bottombar = s.bottombar;
+          if (bottombar?.menu?.items) {
             const item = bottombar.menu.items[sheetIndex];
-            if (item && item.el) {
+            if (item?.el) {
               item.el.click();
             }
           }
 
-          // Set cell focus
-          const colLetter = XLSX.utils.encode_col(colIndex);
-          const cellCoord = `${colLetter}${rowIndex + 1}`;
-          const cell = spreadsheetInstanceRef.current.cell(rowIndex, colIndex, sheetIndex);
+          // Focus cell coordinate
+          const cellCoord = XLSX.utils.encode_cell({ r: rowIndex, c: colIndex });
+          const cell = s.cell(rowIndex, colIndex, sheetIndex);
           const text = cell?.text !== undefined ? String(cell.text) : '';
           activeCellPosRef.current = { r: rowIndex, c: colIndex };
-          onActiveCellChange(cellCoord, text, rowIndex, colIndex);
+          onActiveCellChangeRef.current(cellCoord, text, rowIndex, colIndex);
         }
+      },
+      getActiveSheetName: () => {
+        return spreadsheetInstanceRef.current?.sheet?.data?.name || 'Sheet1';
+      },
+      getActiveSheetIndex: () => {
+        const s = spreadsheetInstanceRef.current;
+        if (!s || !s.datas) return 0;
+        const currentData = s.sheet?.data;
+        const idx = s.datas.findIndex((d) => d === currentData);
+        return idx >= 0 ? idx : 0;
       },
     }));
 
     useEffect(() => {
-      if (!containerRef.current) return;
+      let cancelled = false;
+      const container = containerRef.current;
+      if (!container) return;
 
-      // Clean existing element if re-running
-      containerRef.current.innerHTML = '';
+      container.innerHTML = '';
 
-      const createSpreadsheet = (window as any).x_spreadsheet;
-      const s = createSpreadsheet(containerRef.current, {
+      const factory = getSpreadsheetFactory();
+      if (!factory) {
+        console.error('window.x_spreadsheet is not available');
+        return;
+      }
+
+      const s = factory(container, {
         mode: 'edit',
         showToolbar: true,
         showGrid: true,
@@ -130,21 +157,26 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         },
       });
 
+      if (cancelled) {
+        container.innerHTML = '';
+        return;
+      }
+
       spreadsheetInstanceRef.current = s;
 
-      // Load initial data
-      s.loadData(initialData);
+      // Load initial data on mount only
+      s.loadData(initialDataRef.current);
 
       // Bind change handler
       s.change((data: any) => {
-        onDataChange(data);
+        onDataChangeRef.current(data);
 
         // Update active cell text if changed
         const { r, c } = activeCellPosRef.current;
-        const currentSheetData = (s as any).cell(r, c);
+        const currentSheetData = s.cell(r, c);
         const text = currentSheetData?.text !== undefined ? String(currentSheetData.text) : '';
         const coord = XLSX.utils.encode_cell({ r, c });
-        onActiveCellChange(coord, text, r, c);
+        onActiveCellChangeRef.current(coord, text, r, c);
       });
 
       // Bind cell selected
@@ -152,8 +184,8 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         activeCellPosRef.current = { r: ri, c: ci };
         const coord = XLSX.utils.encode_cell({ r: ri, c: ci });
         const text = cell?.text !== undefined ? String(cell.text) : '';
-        onActiveCellChange(coord, text, ri, ci);
-        onSelectionStatsChange(null);
+        onActiveCellChangeRef.current(coord, text, ri, ci);
+        onSelectionStatsChangeRef.current(null);
       });
 
       // Bind multiple cells selected for stats
@@ -162,9 +194,9 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         const endCoord = XLSX.utils.encode_cell({ r: eri, c: eci });
         const rangeCoord = startCoord === endCoord ? startCoord : `${startCoord}:${endCoord}`;
 
-        const activeCell = (s as any).cell(sri, sci);
+        const activeCell = s.cell(sri, sci);
         const text = activeCell?.text !== undefined ? String(activeCell.text) : '';
-        onActiveCellChange(rangeCoord, text, sri, sci);
+        onActiveCellChangeRef.current(rangeCoord, text, sri, sci);
 
         // Calculate selection stats
         let count = 0;
@@ -176,7 +208,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         for (let r = sri; r <= eri; r++) {
           for (let c = sci; c <= eci; c++) {
             count++;
-            const cObj = (s as any).cell(r, c);
+            const cObj = s.cell(r, c);
             if (cObj && cObj.text !== undefined && cObj.text !== '') {
               const val = Number(cObj.text);
               if (!isNaN(val)) {
@@ -190,7 +222,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         }
 
         if (count > 1) {
-          onSelectionStatsChange({
+          onSelectionStatsChangeRef.current({
             count,
             numericCount,
             sum,
@@ -199,7 +231,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
             max: numericCount > 0 ? max : 0,
           });
         } else {
-          onSelectionStatsChange(null);
+          onSelectionStatsChangeRef.current(null);
         }
       });
 
@@ -207,32 +239,29 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       s.on('cell-edited', (text: string, ri: number, ci: number) => {
         activeCellPosRef.current = { r: ri, c: ci };
         const coord = XLSX.utils.encode_cell({ r: ri, c: ci });
-        onActiveCellChange(coord, text, ri, ci);
+        onActiveCellChangeRef.current(coord, text, ri, ci);
       });
 
       // Resize observer to adapt spreadsheet canvas
       const handleResize = () => {
-        if (s && (s as any).sheet && typeof (s as any).sheet.reload === 'function') {
-          (s as any).sheet.reload();
-        }
+        s.sheet?.reload?.();
       };
 
       const resizeObserver = new ResizeObserver(() => {
         handleResize();
       });
 
-      const container = containerRef.current;
-      if (container) {
-        resizeObserver.observe(container);
-      }
+      resizeObserver.observe(container);
       window.addEventListener('resize', handleResize);
 
       return () => {
+        cancelled = true;
         resizeObserver.disconnect();
         window.removeEventListener('resize', handleResize);
         if (container) {
           container.innerHTML = '';
         }
+        spreadsheetInstanceRef.current = null;
       };
     }, []);
 

@@ -9,17 +9,17 @@ export const DragDropOverlay: React.FC<DragDropOverlayProps> = ({ isDragging }) 
   if (!isDragging) return null;
 
   return (
-    <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center bg-emerald-950/20 backdrop-blur-xs transition-all animate-in fade-in duration-100">
-      <div className="border-4 border-dashed border-emerald-500 bg-white/95 rounded-2xl p-10 max-w-md w-full mx-4 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-150">
-        <div className="w-20 h-20 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-4">
-          <UploadCloud className="w-10 h-10 animate-bounce" />
+    <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center bg-slate-900/30 backdrop-blur-xs transition-all animate-in fade-in duration-100">
+      <div className="border-3 border-dashed border-blue-500 bg-white/95 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-150">
+        <div className="w-16 h-16 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+          <UploadCloud className="w-8 h-8 animate-bounce" />
         </div>
-        <h3 className="text-xl font-bold text-slate-800">Drop your spreadsheet here</h3>
-        <p className="text-sm text-slate-600 mt-2">
-          Supports <span className="font-semibold text-emerald-700">.xlsx, .xls, .csv, .tsv, .ods</span>
+        <h3 className="text-lg font-bold text-slate-800">Drop spreadsheet file here</h3>
+        <p className="text-xs text-slate-600 mt-1.5">
+          Supports <span className="font-semibold text-blue-600">.xlsx, .xls, .csv, .tsv, .ods</span>
         </p>
-        <div className="mt-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-medium border border-emerald-200">
-          <FileSpreadsheet className="w-4 h-4" />
+        <div className="mt-3.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[11px] font-medium border border-slate-200">
+          <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600" />
           <span>Processes 100% locally in your browser</span>
         </div>
       </div>
