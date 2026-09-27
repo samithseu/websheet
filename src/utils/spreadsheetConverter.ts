@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 export interface XSpreadsheetCell {
   text?: string | number | boolean;
   value?: string | number | boolean;
+  formula?: string;
   style?: number;
   merge?: [number, number];
 }
@@ -37,6 +38,36 @@ export interface XSpreadsheetSheet {
 export type XSpreadsheetData = XSpreadsheetSheet[];
 
 /**
+ * Built-in formula functions supported by x-data-spreadsheet engine.
+ * Advanced formulas outside this set are safely rendered using cached values
+ * to avoid canvas rendering crashes.
+ */
+const GRID_SUPPORTED_FORMULAS = new Set([
+  'SUM',
+  'AVERAGE',
+  'MAX',
+  'MIN',
+  'IF',
+  'AND',
+  'OR',
+  'CONCAT',
+]);
+
+/**
+ * Checks whether all functions in a formula string are supported by the x-data-spreadsheet engine.
+ */
+export function isFormulaSupportedByGrid(formula: string): boolean {
+  if (!formula) return true;
+  const matches = formula.matchAll(/([A-Z0-9_.]+)\s*\(/gi);
+  for (const m of matches) {
+    if (!GRID_SUPPORTED_FORMULAS.has(m[1].toUpperCase())) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Converts a SheetJS Workbook into x-data-spreadsheet JSON format
  */
 export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
@@ -66,10 +97,11 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
 
     const range = XLSX.utils.decode_range(ws['!ref']);
 
-    // Handle column widths
+    // Handle column widths (prune beyond used range to avoid Excel 16,384 column bloat)
+    const maxColIdx = Math.max(range.e.c + 20, 100);
     if (ws['!cols'] && Array.isArray(ws['!cols'])) {
       ws['!cols'].forEach((col, cIdx) => {
-        if (!col) return;
+        if (!col || cIdx > maxColIdx) return;
         if (!sheet.cols) sheet.cols = {};
         const width = col.wpx || (col.wch ? Math.round(col.wch * 8.5) : undefined);
         if (width) {
@@ -113,10 +145,24 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
         if (cell !== undefined && cell !== null) {
           rowHasCells = true;
           let cellText = '';
+          let cellFormula: string | undefined;
 
           // Check for formula
           if (cell.f) {
-            cellText = '=' + cell.f;
+            if (isFormulaSupportedByGrid(cell.f)) {
+              cellText = '=' + cell.f;
+            } else {
+              // Formula unsupported by x-data-spreadsheet engine (e.g. RANK, COUNTIFS)
+              // Render cached calculated value to prevent canvas rendering crashes
+              cellFormula = cell.f;
+              if (cell.w !== undefined) {
+                cellText = String(cell.w);
+              } else if (cell.v !== undefined) {
+                cellText = String(cell.v);
+              } else {
+                cellText = '';
+              }
+            }
           } else if (cell.w !== undefined) {
             cellText = String(cell.w);
           } else if (cell.v !== undefined) {
@@ -126,6 +172,7 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
           rowCells[c] = {
             text: cellText,
             value: cell.v !== undefined ? cell.v : cellText,
+            ...(cellFormula ? { formula: cellFormula } : {}),
           };
         }
       }
@@ -204,9 +251,14 @@ export function xSpreadsheetToWorkbook(sdata: XSpreadsheetData): XLSX.WorkBook {
           if (c > maxC) maxC = c;
         }
 
-        // Formula check
-        if (textStr.startsWith('=')) {
-          const formula = textStr.slice(1);
+        const hasDirectFormula = textStr.startsWith('=');
+        const formulaToExport = hasDirectFormula
+          ? textStr.slice(1)
+          : (cell.formula && (!textStr || textStr === String(cell.value) || !isNaN(Number(textStr))) ? cell.formula : undefined);
+
+        // Formula export
+        if (formulaToExport) {
+          const formula = formulaToExport;
           if (cell.value !== undefined && cell.value !== null && cell.value !== '') {
             if (typeof cell.value === 'boolean') {
               ws[cellRef] = {
