@@ -97,7 +97,7 @@ dialog[open] {
   margin: 0;
   padding: 0;
   border: none;
-  background: transparent;
+  background-color: #ffffff !important;
   color: inherit;
   inset: unset;
   overflow: visible;
