@@ -254,8 +254,141 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       resizeObserver.observe(container);
       window.addEventListener('resize', handleResize);
 
+      // Edge-detection auto-scroll when dragging selection or autofill handle
+      let isDragging = false;
+      let lastClientX = 0;
+      let lastClientY = 0;
+      let scrollSpeedX = 0;
+      let scrollSpeedY = 0;
+      let rafId: number | null = null;
+
+      const stopAutoScroll = () => {
+        isDragging = false;
+        scrollSpeedX = 0;
+        scrollSpeedY = 0;
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+      };
+
+      const autoScrollTick = () => {
+        if (!isDragging) return;
+        const overlayer = container.querySelector('.x-spreadsheet-overlayer') as HTMLElement | null;
+        const vs = (s.sheet as any)?.verticalScrollbar;
+        const hs = (s.sheet as any)?.horizontalScrollbar;
+        let didScroll = false;
+
+        if (scrollSpeedY !== 0 && vs && typeof vs.scroll === 'function' && typeof vs.move === 'function') {
+          const { top } = vs.scroll();
+          const newTop = Math.max(0, top + scrollSpeedY);
+          if (newTop !== top) {
+            vs.move({ top: newTop });
+            didScroll = true;
+          }
+        }
+
+        if (scrollSpeedX !== 0 && hs && typeof hs.scroll === 'function' && typeof hs.move === 'function') {
+          const { left } = hs.scroll();
+          const newLeft = Math.max(0, left + scrollSpeedX);
+          if (newLeft !== left) {
+            hs.move({ left: newLeft });
+            didScroll = true;
+          }
+        }
+
+        if (didScroll && overlayer) {
+          overlayer.dispatchEvent(
+            new MouseEvent('mousemove', {
+              bubbles: true,
+              cancelable: true,
+              clientX: lastClientX,
+              clientY: lastClientY,
+              buttons: 1,
+            })
+          );
+        }
+
+        if (isDragging && (scrollSpeedX !== 0 || scrollSpeedY !== 0)) {
+          rafId = requestAnimationFrame(autoScrollTick);
+        } else {
+          rafId = null;
+        }
+      };
+
+      const handleWindowMouseMove = (e: MouseEvent) => {
+        if (!isDragging || e.buttons !== 1) {
+          if (isDragging) stopAutoScroll();
+          return;
+        }
+
+        lastClientX = e.clientX;
+        lastClientY = e.clientY;
+
+        const overlayer = container.querySelector('.x-spreadsheet-overlayer') as HTMLElement | null;
+        if (!overlayer) return;
+
+        const rect = overlayer.getBoundingClientRect();
+        const EDGE_THRESHOLD = 36;
+        let newSpeedX = 0;
+        let newSpeedY = 0;
+
+        if (e.clientY > rect.bottom - EDGE_THRESHOLD) {
+          const dist = Math.max(1, e.clientY - (rect.bottom - EDGE_THRESHOLD));
+          newSpeedY = Math.min(30, Math.max(5, Math.round(dist * 0.6)));
+        } else if (e.clientY < rect.top + EDGE_THRESHOLD) {
+          const dist = Math.max(1, (rect.top + EDGE_THRESHOLD) - e.clientY);
+          newSpeedY = -Math.min(30, Math.max(5, Math.round(dist * 0.6)));
+        }
+
+        if (e.clientX > rect.right - EDGE_THRESHOLD) {
+          const dist = Math.max(1, e.clientX - (rect.right - EDGE_THRESHOLD));
+          newSpeedX = Math.min(35, Math.max(5, Math.round(dist * 0.6)));
+        } else if (e.clientX < rect.left + EDGE_THRESHOLD) {
+          const dist = Math.max(1, (rect.left + EDGE_THRESHOLD) - e.clientX);
+          newSpeedX = -Math.min(35, Math.max(5, Math.round(dist * 0.6)));
+        }
+
+        scrollSpeedX = newSpeedX;
+        scrollSpeedY = newSpeedY;
+
+        if ((scrollSpeedX !== 0 || scrollSpeedY !== 0) && rafId === null) {
+          rafId = requestAnimationFrame(autoScrollTick);
+        }
+      };
+
+      const handleWindowMouseUp = () => {
+        stopAutoScroll();
+      };
+
+      const handleContainerMouseDown = (e: MouseEvent) => {
+        if (e.buttons !== 1) return;
+        const target = e.target as HTMLElement | null;
+        if (!target) return;
+
+        // Check if drag started on overlayer, autofill handle, or table cell
+        const isCanvasArea = target.closest('.x-spreadsheet-overlayer') ||
+          target.closest('.x-spreadsheet-table') ||
+          target.classList.contains('x-spreadsheet-selector-corner') ||
+          target.closest('.x-spreadsheet-selector');
+
+        if (isCanvasArea) {
+          isDragging = true;
+          lastClientX = e.clientX;
+          lastClientY = e.clientY;
+        }
+      };
+
+      container.addEventListener('mousedown', handleContainerMouseDown);
+      window.addEventListener('mousemove', handleWindowMouseMove);
+      window.addEventListener('mouseup', handleWindowMouseUp);
+
       return () => {
         cancelled = true;
+        stopAutoScroll();
+        container.removeEventListener('mousedown', handleContainerMouseDown);
+        window.removeEventListener('mousemove', handleWindowMouseMove);
+        window.removeEventListener('mouseup', handleWindowMouseUp);
         resizeObserver.disconnect();
         window.removeEventListener('resize', handleResize);
         if (container) {
