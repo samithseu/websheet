@@ -8,6 +8,7 @@ import { FormulaGuideDialog } from './components/FormulaGuideDialog';
 import { PrivacyDialog } from './components/PrivacyDialog';
 import { ShortcutsDialog } from './components/ShortcutsDialog';
 import { ConfirmDialog } from './components/ConfirmDialog';
+import { PrintDialog } from './components/PrintDialog';
 import {
   readSpreadsheetFile,
   workbookToXSpreadsheet,
@@ -39,6 +40,11 @@ export function App() {
   const [isFormulaGuideOpen, setIsFormulaGuideOpen] = useState(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
+  const [printPayload, setPrintPayload] = useState<{
+    data: XSpreadsheetData;
+    activeSheetIndex: number;
+    selectedRange: any;
+  } | null>(null);
 
   // Destructive action confirmation state
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -199,8 +205,15 @@ export function App() {
   );
 
   const handlePrint = useCallback(() => {
-    window.print();
-  }, []);
+    const currentData = gridRef.current?.getData() || spreadsheetData;
+    const sheetIdx = gridRef.current?.getActiveSheetIndex() || 0;
+    const selRange = gridRef.current?.getSelectedRange() || null;
+    setPrintPayload({
+      data: currentData,
+      activeSheetIndex: sheetIdx,
+      selectedRange: selRange,
+    });
+  }, [spreadsheetData]);
 
   // Destructive Actions: Confirm before executing
   const handleRequestNewSpreadsheet = useCallback(() => {
@@ -414,6 +427,7 @@ export function App() {
           onDataChange={(newData) => setSpreadsheetData(newData)}
           onActiveCellChange={handleActiveCellChange}
           onSelectionStatsChange={handleSelectionStatsChange}
+          onPrintRequest={handlePrint}
         />
       </div>
 
@@ -421,6 +435,17 @@ export function App() {
       <DragDropOverlay isDragging={isDragging} />
 
       {/* Native <dialog> Modals */}
+      {printPayload && (
+        <PrintDialog
+          isOpen={true}
+          onClose={() => setPrintPayload(null)}
+          data={printPayload.data}
+          activeSheetIndex={printPayload.activeSheetIndex}
+          selectedRange={printPayload.selectedRange}
+          filename={filename}
+        />
+      )}
+
       <FindReplaceDialog
         isOpen={isFindReplaceOpen}
         onClose={() => setIsFindReplaceOpen(false)}

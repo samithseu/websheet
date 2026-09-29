@@ -54,6 +54,11 @@ html, body, #root {
   border-top: 1px solid #e2e8f0;
 }
 
+/* Suppress legacy x-spreadsheet print overlay in favor of WebSheet's unified PrintDialog */
+.x-spreadsheet-print {
+  display: none !important;
+}
+
 .x-spreadsheet-toolbar {
   background-color: #ffffff !important;
   border-bottom: 1px solid #e2e8f0 !important;

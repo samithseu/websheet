@@ -5,6 +5,7 @@ import { normalizeSpreadsheetData, type XSpreadsheetData } from '../utils/spread
 import type { SelectionStats } from './FormulaBar';
 import { getSpreadsheetFactory, type XSpreadsheetInstance } from '../types/spreadsheet';
 import { calculateAutofitColumnWidth, calculateAutofitAllColumns } from '../utils/columnAutofit';
+import type { CellRange } from '../utils/printRenderer';
 
 export interface SpreadsheetGridRef {
   loadData: (data: XSpreadsheetData) => void;
@@ -20,6 +21,7 @@ export interface SpreadsheetGridRef {
   selectAll: () => void;
   autofitColumn: (colIndex: number) => void;
   autofitAllColumns: () => void;
+  getSelectedRange: () => CellRange | null;
 }
 
 interface SpreadsheetGridProps {
@@ -27,6 +29,7 @@ interface SpreadsheetGridProps {
   onDataChange: (data: XSpreadsheetData) => void;
   onActiveCellChange: (coord: string, text: string, rowIndex: number, colIndex: number) => void;
   onSelectionStatsChange: (stats: SelectionStats | null) => void;
+  onPrintRequest?: () => void;
 }
 
 export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridProps>(
@@ -36,6 +39,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       onDataChange,
       onActiveCellChange,
       onSelectionStatsChange,
+      onPrintRequest,
     },
     ref
   ) => {
@@ -43,6 +47,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
     const spreadsheetInstanceRef = useRef<XSpreadsheetInstance | null>(null);
     const activeCellPosRef = useRef<{ r: number; c: number }>({ r: 0, c: 0 });
     const isAllSelectedRef = useRef(false);
+    const selectedRangeRef = useRef<CellRange | null>(null);
 
     // Initial data captured for mount only (per AGENTS.md)
     const initialDataRef = useRef(initialData);
@@ -51,6 +56,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
     const onDataChangeRef = useRef(onDataChange);
     const onActiveCellChangeRef = useRef(onActiveCellChange);
     const onSelectionStatsChangeRef = useRef(onSelectionStatsChange);
+    const onPrintRequestRef = useRef(onPrintRequest);
 
     const handleSelectAllRef = useRef<() => void>(() => {});
     const autofitColumnRef = useRef<(colIndex: number) => void>(() => {});
@@ -60,6 +66,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       onDataChangeRef.current = onDataChange;
       onActiveCellChangeRef.current = onActiveCellChange;
       onSelectionStatsChangeRef.current = onSelectionStatsChange;
+      onPrintRequestRef.current = onPrintRequest;
     });
 
     // Expose handles to parent
@@ -68,6 +75,13 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         if (spreadsheetInstanceRef.current) {
           const normalized = normalizeSpreadsheetData(data);
           spreadsheetInstanceRef.current.loadData(normalized);
+          selectedRangeRef.current = null;
+          const sheetInstance = (spreadsheetInstanceRef.current as any).sheet;
+          if (sheetInstance?.print) {
+            sheetInstance.print.preview = () => {
+              onPrintRequestRef.current?.();
+            };
+          }
           onDataChangeRef.current(spreadsheetInstanceRef.current.getData());
         }
       },
@@ -139,6 +153,9 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       autofitAllColumns: () => {
         autofitAllColumnsRef.current();
       },
+      getSelectedRange: () => {
+        return selectedRangeRef.current;
+      },
     }));
 
     useEffect(() => {
@@ -186,6 +203,29 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       // Load initial data on mount only (normalized for merges)
       const normalizedInitial = normalizeSpreadsheetData(initialDataRef.current);
       s.loadData(normalizedInitial);
+
+      // Intercept toolbar printer action to trigger unified PrintDialog
+      const sheetInstance = (s as any).sheet;
+      if (sheetInstance?.print) {
+        sheetInstance.print.preview = () => {
+          onPrintRequestRef.current?.();
+        };
+      }
+
+      const printBtn = container.querySelector(
+        '.x-spreadsheet-icon .print, .x-spreadsheet-icon-img.print'
+      )?.closest('.x-spreadsheet-toolbar-btn') as HTMLElement | null;
+      if (printBtn) {
+        printBtn.addEventListener(
+          'click',
+          (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onPrintRequestRef.current?.();
+          },
+          true
+        );
+      }
 
       // Wrap editor.setCell to guarantee opaque background matching cell bgcolor or white
       const editor = (s as any).sheet?.editor;
@@ -307,6 +347,8 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         isAllSelectedRef.current = true;
         updateSelectAllBtnVisual();
 
+        selectedRangeRef.current = { sri: 0, sci: 0, eri: data.rows.len - 1, eci: data.cols.len - 1 };
+
         const startCoord = XLSX.utils.encode_cell({ r: 0, c: 0 });
         const endCoord = XLSX.utils.encode_cell({ r: data.rows.len - 1, c: data.cols.len - 1 });
         const rangeCoord = `${startCoord}:${endCoord}`;
@@ -375,6 +417,9 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         const targetC = merge ? merge.sci : ci;
         const targetCell = sheet?.data?.getCell?.(targetR, targetC) || cell;
         activeCellPosRef.current = { r: targetR, c: targetC };
+        selectedRangeRef.current = merge
+          ? { sri: merge.sri, sci: merge.sci, eri: merge.eri, eci: merge.eci }
+          : { sri: targetR, sci: targetC, eri: targetR, eci: targetC };
         const coord = merge
           ? `${XLSX.utils.encode_cell({ r: merge.sri, c: merge.sci })}:${XLSX.utils.encode_cell({ r: merge.eri, c: merge.eci })}`
           : XLSX.utils.encode_cell({ r: targetR, c: targetC });
@@ -389,6 +434,8 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         const totalCols = (s as any).sheet?.data?.cols?.len || 26;
         isAllSelectedRef.current = sri === 0 && sci === 0 && eri >= totalRows - 1 && eci >= totalCols - 1;
         updateSelectAllBtnVisual();
+
+        selectedRangeRef.current = { sri, sci, eri, eci };
 
         const startCoord = XLSX.utils.encode_cell({ r: sri, c: sci });
         const endCoord = XLSX.utils.encode_cell({ r: eri, c: eci });
