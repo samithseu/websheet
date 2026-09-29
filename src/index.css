@@ -12,6 +12,42 @@ html, body, #root {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Thin scrollbars across all scrollable containers (CSS Baseline) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.x-spreadsheet-scrollbar,
+.x-spreadsheet-scrollbar.horizontal,
+.x-spreadsheet-scrollbar.vertical {
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}
+
+/* Opaque cell editor overlay to prevent canvas text show-through */
+.x-spreadsheet-editor .x-spreadsheet-editor-area,
+.x-spreadsheet-editor .x-spreadsheet-editor-area textarea {
+  background-color: #ffffff !important;
+}
+
 /* Custom enhancements for x-spreadsheet UI - Light Instrument */
 .x-spreadsheet {
   font-family: inherit !important;

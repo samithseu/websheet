@@ -1,7 +1,7 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import 'x-data-spreadsheet';
 import * as XLSX from 'xlsx';
-import type { XSpreadsheetData } from '../utils/spreadsheetConverter';
+import { normalizeSpreadsheetData, type XSpreadsheetData } from '../utils/spreadsheetConverter';
 import type { SelectionStats } from './FormulaBar';
 import { getSpreadsheetFactory, type XSpreadsheetInstance } from '../types/spreadsheet';
 import { calculateAutofitColumnWidth, calculateAutofitAllColumns } from '../utils/columnAutofit';
@@ -66,7 +66,8 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
     useImperativeHandle(ref, () => ({
       loadData: (data: XSpreadsheetData) => {
         if (spreadsheetInstanceRef.current) {
-          spreadsheetInstanceRef.current.loadData(data);
+          const normalized = normalizeSpreadsheetData(data);
+          spreadsheetInstanceRef.current.loadData(normalized);
           onDataChangeRef.current(spreadsheetInstanceRef.current.getData());
         }
       },
@@ -182,8 +183,45 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
 
       spreadsheetInstanceRef.current = s;
 
-      // Load initial data on mount only
-      s.loadData(initialDataRef.current);
+      // Load initial data on mount only (normalized for merges)
+      const normalizedInitial = normalizeSpreadsheetData(initialDataRef.current);
+      s.loadData(normalizedInitial);
+
+      // Wrap editor.setCell to guarantee opaque background matching cell bgcolor or white
+      const editor = (s as any).sheet?.editor;
+      if (editor && typeof editor.setCell === 'function') {
+        const origSetCell = editor.setCell.bind(editor);
+        editor.setCell = function (cell: any, validator: any) {
+          origSetCell(cell, validator);
+          const sheet = (s as any).sheet;
+          if (sheet?.data?.selector) {
+            const { ri, ci } = sheet.data.selector;
+            const style = sheet.data.getCellStyleOrDefault(ri, ci);
+            const bg = style?.bgcolor || '#ffffff';
+            if (editor.textEl?.el) {
+              editor.textEl.el.style.backgroundColor = bg;
+            }
+            if (editor.areaEl?.el) {
+              editor.areaEl.el.style.backgroundColor = bg;
+            }
+          }
+        };
+      }
+
+      // Wrap selector.set so keyboard arrow navigation into merged cells targets the top-left cell
+      const selector = (s as any).sheet?.selector;
+      if (selector && typeof selector.set === 'function') {
+        const origSelectorSet = selector.set.bind(selector);
+        selector.set = function (ri: number, ci: number, indexesUpdated = true) {
+          const sheet = (s as any).sheet;
+          const merge = sheet?.data?.merges?.getFirstIncludes?.(ri, ci);
+          if (merge) {
+            origSelectorSet(merge.sri, merge.sci, indexesUpdated);
+            return;
+          }
+          origSelectorSet(ri, ci, indexesUpdated);
+        };
+      }
 
       // Top-left "Select All" button (corner above row 1, left of column A)
       const sheetEl = container.querySelector('.x-spreadsheet-sheet') as HTMLElement | null;
@@ -331,10 +369,17 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       s.on('cell-selected', (cell: any, ri: number, ci: number) => {
         isAllSelectedRef.current = false;
         updateSelectAllBtnVisual();
-        activeCellPosRef.current = { r: ri, c: ci };
-        const coord = XLSX.utils.encode_cell({ r: ri, c: ci });
-        const text = cell?.text !== undefined ? String(cell.text) : '';
-        onActiveCellChangeRef.current(coord, text, ri, ci);
+        const sheet = (s as any).sheet;
+        const merge = sheet?.data?.merges?.getFirstIncludes?.(ri, ci);
+        const targetR = merge ? merge.sri : ri;
+        const targetC = merge ? merge.sci : ci;
+        const targetCell = sheet?.data?.getCell?.(targetR, targetC) || cell;
+        activeCellPosRef.current = { r: targetR, c: targetC };
+        const coord = merge
+          ? `${XLSX.utils.encode_cell({ r: merge.sri, c: merge.sci })}:${XLSX.utils.encode_cell({ r: merge.eri, c: merge.eci })}`
+          : XLSX.utils.encode_cell({ r: targetR, c: targetC });
+        const text = targetCell?.text !== undefined ? String(targetCell.text) : '';
+        onActiveCellChangeRef.current(coord, text, targetR, targetC);
         onSelectionStatsChangeRef.current(null);
       });
 
@@ -639,9 +684,65 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       window.addEventListener('mousemove', handleWindowMouseMove);
       window.addEventListener('mouseup', handleWindowMouseUp);
 
+      // Instant cell editing when Enter is pressed on a selected cell
+      const handleGridKeyDown = (e: KeyboardEvent) => {
+        if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || e.isComposing) {
+          return;
+        }
+
+        // Do not intercept if any modal dialog is currently open
+        if (document.querySelector('dialog[open]')) return;
+
+        const activeEl = document.activeElement;
+        const sheet = (s as any).sheet;
+        const isInsideGrid = container.contains(activeEl) || activeEl === document.body;
+        if (!isInsideGrid && !sheet?.focusing) return;
+
+        // If focus is on an input or textarea outside the grid (e.g. FormulaBar, Header filename), do not intercept
+        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+          if (!container.contains(activeEl)) return;
+        }
+
+        // Check if cell editor is already visible/active
+        const editorEl = container.querySelector('.x-spreadsheet-editor') as HTMLElement | null;
+        const isEditing = editorEl && editorEl.style.display !== 'none';
+
+        // If user is already editing the cell, allow Enter to commit and advance down
+        if (isEditing) return;
+
+        // If user pressed Enter on a selected cell, enter edit mode instantly
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (sheet && sheet.editor && sheet.data) {
+          if (sheet.data.settings?.mode === 'read') return;
+          const { ri, ci } = sheet.data.selector;
+          const merge = sheet.data.merges?.getFirstIncludes?.(ri, ci);
+          const targetR = merge ? merge.sri : ri;
+          const targetC = merge ? merge.sci : ci;
+
+          // Ensure selector indexes are synced to the top-left of the merge
+          if (merge && (sheet.data.selector.ri !== targetR || sheet.data.selector.ci !== targetC)) {
+            sheet.data.selector.setIndexes(targetR, targetC);
+            if (sheet.selector) sheet.selector.indexes = [targetR, targetC];
+          }
+
+          const sOffset = sheet.data.getSelectedRect();
+          const tOffset = sheet.getTableOffset();
+          const sPosition = sOffset.top > tOffset.height / 2 ? 'bottom' : 'top';
+          sheet.editor.setOffset(sOffset, sPosition);
+          const cell = sheet.data.getCell(targetR, targetC) || sheet.data.getSelectedCell();
+          sheet.editor.setCell(cell, sheet.data.getSelectedValidator());
+          sheet.clearClipboard?.();
+        }
+      };
+
+      window.addEventListener('keydown', handleGridKeyDown, true);
+
       return () => {
         cancelled = true;
         stopAutoScroll();
+        window.removeEventListener('keydown', handleGridKeyDown, true);
         container.removeEventListener('mousedown', handleBorderMouseDown, true);
         window.removeEventListener('mouseup', handleBorderMouseUp, true);
         container.removeEventListener('dblclick', handleBorderDblClick, true);

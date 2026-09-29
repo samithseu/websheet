@@ -27,12 +27,12 @@ export const SAMPLE_TEMPLATES: SampleTemplate[] = [
         rows: {
           0: {
             cells: {
-              0: { text: 'Monthly Personal Budget & Expenses' },
+              0: { text: 'Monthly Personal Budget & Expenses', merge: [0, 3] },
             },
           },
           2: {
             cells: {
-              0: { text: 'INCOME' },
+              0: { text: 'INCOME', merge: [0, 3] },
             },
           },
           3: {
@@ -77,7 +77,7 @@ export const SAMPLE_TEMPLATES: SampleTemplate[] = [
           },
           9: {
             cells: {
-              0: { text: 'EXPENSES' },
+              0: { text: 'EXPENSES', merge: [0, 3] },
             },
           },
           10: {
@@ -168,7 +168,7 @@ export const SAMPLE_TEMPLATES: SampleTemplate[] = [
         rows: {
           0: {
             cells: {
-              0: { text: 'Quarterly Product Sales Report' },
+              0: { text: 'Quarterly Product Sales Report', merge: [0, 5] },
             },
           },
           2: {
@@ -266,7 +266,7 @@ export const SAMPLE_TEMPLATES: SampleTemplate[] = [
         rows: {
           0: {
             cells: {
-              0: { text: 'CS 101 - Student Performance & Grades' },
+              0: { text: 'CS 101 - Student Performance & Grades', merge: [0, 6] },
             },
           },
           2: {

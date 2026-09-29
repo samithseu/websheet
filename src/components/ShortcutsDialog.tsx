@@ -21,7 +21,7 @@ const SHORTCUTS: ShortcutItem[] = [
   { key: 'Ctrl + X / ⌘ + X', description: 'Cut selected cells' },
   { key: 'Ctrl + V / ⌘ + V', description: 'Paste cells' },
   { key: 'Ctrl + P / ⌘ + P', description: 'Print sheet / Export to PDF' },
-  { key: 'Enter', description: 'Commit cell edit and move down' },
+  { key: 'Enter', description: 'Edit selected cell / commit edit and move down' },
   { key: 'Tab', description: 'Commit cell edit and move right' },
   { key: 'Escape', description: 'Cancel edit or close active modal' },
   { key: 'Arrow Keys', description: 'Navigate between cells' },

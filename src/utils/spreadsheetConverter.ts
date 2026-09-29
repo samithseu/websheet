@@ -68,6 +68,85 @@ export function isFormulaSupportedByGrid(formula: string): boolean {
 }
 
 /**
+ * Ensures two-way synchronization between `sheet.merges` and `cell.merge`
+ * for proper canvas box rendering in x-data-spreadsheet and reliable SheetJS exports.
+ */
+export function normalizeSpreadsheetData(data: XSpreadsheetData): XSpreadsheetData {
+  if (!data || !Array.isArray(data)) return data;
+  return data.map((sheet) => {
+    const merges = new Set<string>(sheet.merges || []);
+    const rows = { ...(sheet.rows || {}) };
+
+    // 1. Scan rows for cells with cell.merge and ensure they are recorded in merges
+    Object.keys(rows).forEach((rKey) => {
+      const r = parseInt(rKey, 10);
+      if (isNaN(r) || !rows[r]?.cells) return;
+      Object.keys(rows[r].cells).forEach((cKey) => {
+        const c = parseInt(cKey, 10);
+        if (isNaN(c)) return;
+        const cell = rows[r].cells[c];
+        if (cell?.merge && Array.isArray(cell.merge)) {
+          const [rn, cn] = cell.merge;
+          if (rn > 0 || cn > 0) {
+            merges.add(
+              XLSX.utils.encode_range({
+                s: { r, c },
+                e: { r: r + rn, c: c + cn },
+              })
+            );
+          }
+        }
+      });
+    });
+
+    // 2. For every merge range in merges, ensure top-left cell has cell.merge set
+    // and prune subordinate cells inside the merge range to prevent canvas text overlap
+    merges.forEach((mergeRef) => {
+      try {
+        const range = XLSX.utils.decode_range(mergeRef);
+        const { s: { r: sri, c: sci }, e: { r: eri, c: eci } } = range;
+        const rn = eri - sri;
+        const cn = eci - sci;
+
+        if (rn >= 0 && cn >= 0 && (rn > 0 || cn > 0)) {
+          if (!rows[sri]) {
+            rows[sri] = { cells: {} };
+          } else {
+            rows[sri] = { ...rows[sri], cells: { ...(rows[sri].cells || {}) } };
+          }
+          if (!rows[sri].cells[sci]) {
+            rows[sri].cells[sci] = { text: '' };
+          }
+          rows[sri].cells[sci] = {
+            ...rows[sri].cells[sci],
+            merge: [rn, cn],
+          };
+
+          // Remove subordinate cells within the merge range
+          for (let r = sri; r <= eri; r++) {
+            for (let c = sci; c <= eci; c++) {
+              if (r === sri && c === sci) continue;
+              if (rows[r]?.cells?.[c]) {
+                rows[r] = { ...rows[r], cells: { ...rows[r].cells } };
+                delete rows[r].cells[c];
+              }
+            }
+          }
+        }
+      } catch {
+        // Skip invalid ranges
+      }
+    });
+
+    return {
+      ...sheet,
+      merges: Array.from(merges),
+      rows,
+    };
+  });
+}
+
+/**
  * Converts a SheetJS Workbook into x-data-spreadsheet JSON format
  */
 export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
@@ -194,7 +273,7 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
     out.push(sheet);
   });
 
-  return out.length > 0 ? out : [createEmptySheet('Sheet1')];
+  return normalizeSpreadsheetData(out.length > 0 ? out : [createEmptySheet('Sheet1')]);
 }
 
 /**
@@ -202,14 +281,15 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
  */
 export function xSpreadsheetToWorkbook(sdata: XSpreadsheetData): XLSX.WorkBook {
   const wb = XLSX.utils.book_new();
+  const normalizedData = normalizeSpreadsheetData(sdata);
 
-  if (!sdata || !Array.isArray(sdata) || sdata.length === 0) {
+  if (!normalizedData || !Array.isArray(normalizedData) || normalizedData.length === 0) {
     const ws = XLSX.utils.aoa_to_sheet([[]]);
     XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
     return wb;
   }
 
-  sdata.forEach((sheet, sheetIdx) => {
+  normalizedData.forEach((sheet, sheetIdx) => {
     const ws: XLSX.WorkSheet = {};
     let minR = 0;
     let minC = 0;
