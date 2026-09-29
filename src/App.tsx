@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
+import { HomeScreen } from './components/HomeScreen';
 import { FormulaBar, type SelectionStats } from './components/FormulaBar';
 import { SpreadsheetGrid, type SpreadsheetGridRef } from './components/SpreadsheetGrid';
 import { DragDropOverlay } from './components/DragDropOverlay';
@@ -24,15 +25,20 @@ import {
 import { SAMPLE_TEMPLATES } from './utils/sampleData';
 
 export function App() {
-  const [filename, setFilename] = useState('Monthly_Budget.xlsx');
-  const [spreadsheetData, setSpreadsheetData] = useState<XSpreadsheetData>(
-    SAMPLE_TEMPLATES[0].data
-  );
+  const [currentView, setCurrentView] = useState<'home' | 'editor'>('home');
+  const [hasActiveSession, setHasActiveSession] = useState(false);
+  const [filename, setFilename] = useState('Untitled_Spreadsheet.xlsx');
+  const [spreadsheetData, setSpreadsheetData] = useState<XSpreadsheetData>(() => [
+    createEmptySheet('Sheet1'),
+  ]);
   const [activeCellCoord, setActiveCellCoord] = useState('A1');
   const [activeCellText, setActiveCellText] = useState('');
   const [activeCellRow, setActiveCellRow] = useState(0);
   const [activeCellCol, setActiveCellCol] = useState(0);
   const [selectionStats, setSelectionStats] = useState<SelectionStats | null>(null);
+
+  // Chromium PWA Install Prompt
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<any>(null);
 
   // Dialogs state
   const [isDragging, setIsDragging] = useState(false);
@@ -81,6 +87,28 @@ export function App() {
     };
   }, []);
 
+  // Listen for Chromium beforeinstallprompt event
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredInstallPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = useCallback(async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredInstallPrompt(null);
+    }
+  }, [deferredInstallPrompt]);
+
   // Handle local spreadsheet file opening
   const handleFileUpload = useCallback(
     async (file: File) => {
@@ -89,6 +117,8 @@ export function App() {
         const data = workbookToXSpreadsheet(wb);
         setSpreadsheetData(data);
         setFilename(file.name);
+        setHasActiveSession(true);
+        setCurrentView('editor');
         gridRef.current?.loadData(data);
         showToast(`Successfully opened "${file.name}" locally`);
       } catch (err: any) {
@@ -215,6 +245,91 @@ export function App() {
     });
   }, [spreadsheetData]);
 
+  // Navigation & Session handlers
+  const handleNavigateHome = useCallback(() => {
+    if (gridRef.current) {
+      const currentData = gridRef.current.getData();
+      setSpreadsheetData(currentData);
+    }
+    setCurrentView('home');
+  }, []);
+
+  const handleResumeEditing = useCallback(() => {
+    setCurrentView('editor');
+  }, []);
+
+  const handleStartNewSpreadsheet = useCallback(() => {
+    if (hasActiveSession) {
+      setConfirmConfig({
+        isOpen: true,
+        title: 'Create new spreadsheet?',
+        description: 'Any unsaved changes in your current workbook will be lost. Create a new blank sheet?',
+        confirmLabel: 'Create New',
+        onConfirm: () => {
+          const emptyData = [createEmptySheet('Sheet1')];
+          setSpreadsheetData(emptyData);
+          setFilename('Untitled_Spreadsheet.xlsx');
+          setHasActiveSession(true);
+          setCurrentView('editor');
+          gridRef.current?.loadData(emptyData);
+          showToast('Created new blank spreadsheet');
+        },
+      });
+    } else {
+      const emptyData = [createEmptySheet('Sheet1')];
+      setSpreadsheetData(emptyData);
+      setFilename('Untitled_Spreadsheet.xlsx');
+      setHasActiveSession(true);
+      setCurrentView('editor');
+      gridRef.current?.loadData(emptyData);
+      showToast('Created new blank spreadsheet');
+    }
+  }, [hasActiveSession, showToast]);
+
+  const handleSelectTemplate = useCallback(
+    (templateId: string) => {
+      const tmpl = SAMPLE_TEMPLATES.find((t) => t.id === templateId);
+      if (!tmpl) return;
+
+      if (hasActiveSession) {
+        setConfirmConfig({
+          isOpen: true,
+          title: `Load template "${tmpl.name}"?`,
+          description: 'Loading this template will replace your current spreadsheet data.',
+          confirmLabel: 'Load Template',
+          onConfirm: () => {
+            setSpreadsheetData(tmpl.data);
+            setFilename(tmpl.filename);
+            setHasActiveSession(true);
+            setCurrentView('editor');
+            gridRef.current?.loadData(tmpl.data);
+            showToast(`Loaded template: "${tmpl.name}"`);
+          },
+        });
+      } else {
+        setSpreadsheetData(tmpl.data);
+        setFilename(tmpl.filename);
+        setHasActiveSession(true);
+        setCurrentView('editor');
+        gridRef.current?.loadData(tmpl.data);
+        showToast(`Loaded template: "${tmpl.name}"`);
+      }
+    },
+    [hasActiveSession, showToast]
+  );
+
+  const handleAllSheetsDeleted = useCallback(() => {
+    setHasActiveSession(false);
+    setSpreadsheetData([createEmptySheet('Sheet1')]);
+    setFilename('Untitled_Spreadsheet.xlsx');
+    setCurrentView('home');
+    showToast('All sheets deleted. Returned to home screen.');
+  }, [showToast]);
+
+  const handleRequestDeleteSheet = useCallback(() => {
+    gridRef.current?.deleteCurrentSheet();
+  }, []);
+
   // Destructive Actions: Confirm before executing
   const handleRequestNewSpreadsheet = useCallback(() => {
     setConfirmConfig({
@@ -226,6 +341,7 @@ export function App() {
         const emptyData = [createEmptySheet('Sheet1')];
         setSpreadsheetData(emptyData);
         setFilename('Untitled_Spreadsheet.xlsx');
+        setHasActiveSession(true);
         gridRef.current?.loadData(emptyData);
         showToast('Created new blank spreadsheet');
       },
@@ -258,6 +374,7 @@ export function App() {
         onConfirm: () => {
           setSpreadsheetData(tmpl.data);
           setFilename(tmpl.filename);
+          setHasActiveSession(true);
           gridRef.current?.loadData(tmpl.data);
           showToast(`Loaded template: "${tmpl.name}"`);
         },
@@ -363,23 +480,29 @@ export function App() {
       const isCmdOrCtrl = e.metaKey || e.ctrlKey;
 
       if (isCmdOrCtrl && e.key.toLowerCase() === 's') {
-        e.preventDefault();
-        handleExport('xlsx');
+        if (currentView === 'editor') {
+          e.preventDefault();
+          handleExport('xlsx');
+        }
       } else if (isCmdOrCtrl && e.key.toLowerCase() === 'o') {
         e.preventDefault();
         handleOpenFileClick();
       } else if (isCmdOrCtrl && e.key.toLowerCase() === 'f') {
-        e.preventDefault();
-        setIsFindReplaceOpen(true);
+        if (currentView === 'editor') {
+          e.preventDefault();
+          setIsFindReplaceOpen(true);
+        }
       } else if (isCmdOrCtrl && e.key.toLowerCase() === 'p') {
-        e.preventDefault();
-        handlePrint();
+        if (currentView === 'editor') {
+          e.preventDefault();
+          handlePrint();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleExport, handleOpenFileClick, handlePrint]);
+  }, [handleExport, handleOpenFileClick, handlePrint, currentView]);
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-slate-50 font-sans">
@@ -392,44 +515,67 @@ export function App() {
         className="hidden"
       />
 
-      {/* Top Application Header & Menu Bar */}
-      <Header
-        filename={filename}
-        onFilenameChange={setFilename}
-        onRequestNewSpreadsheet={handleRequestNewSpreadsheet}
-        onOpenFileClick={handleOpenFileClick}
-        onExport={handleExport}
-        onPrint={handlePrint}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        onRequestClearSheet={handleRequestClearSheet}
-        onOpenFindReplace={() => setIsFindReplaceOpen(true)}
-        onOpenFormulaGuide={() => setIsFormulaGuideOpen(true)}
-        onOpenPrivacyModal={() => setIsPrivacyModalOpen(true)}
-        onOpenShortcutsModal={() => setIsShortcutsModalOpen(true)}
-        onRequestLoadTemplate={handleRequestLoadTemplate}
-      />
-
-      {/* Formula & Coordinate Bar */}
-      <FormulaBar
-        activeCellCoord={activeCellCoord}
-        activeCellText={activeCellText}
-        onCommitCellText={handleCommitCellText}
-        onOpenFormulaGuide={() => setIsFormulaGuideOpen(true)}
-        selectionStats={selectionStats}
-      />
-
-      {/* Main Grid View */}
-      <div className="flex-1 w-full relative flex flex-col overflow-hidden">
-        <SpreadsheetGrid
-          ref={gridRef}
-          initialData={spreadsheetData}
-          onDataChange={(newData) => setSpreadsheetData(newData)}
-          onActiveCellChange={handleActiveCellChange}
-          onSelectionStatsChange={handleSelectionStatsChange}
-          onPrintRequest={handlePrint}
+      {currentView === 'home' ? (
+        <HomeScreen
+          onNewSpreadsheet={handleStartNewSpreadsheet}
+          onOpenFileClick={handleOpenFileClick}
+          onSelectTemplate={handleSelectTemplate}
+          hasActiveSession={hasActiveSession}
+          activeFilename={filename}
+          onResumeEditing={handleResumeEditing}
+          onOpenPrivacyModal={() => setIsPrivacyModalOpen(true)}
+          onOpenShortcutsModal={() => setIsShortcutsModalOpen(true)}
+          deferredInstallPrompt={deferredInstallPrompt}
+          onInstallClick={handleInstallClick}
+          onDropFile={handleFileUpload}
         />
-      </div>
+      ) : (
+        <>
+          {/* Top Application Header & Menu Bar */}
+          <Header
+            filename={filename}
+            onFilenameChange={setFilename}
+            onNavigateHome={handleNavigateHome}
+            onRequestNewSpreadsheet={handleRequestNewSpreadsheet}
+            onOpenFileClick={handleOpenFileClick}
+            onExport={handleExport}
+            onPrint={handlePrint}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            onRequestClearSheet={handleRequestClearSheet}
+            onRequestDeleteSheet={handleRequestDeleteSheet}
+            onOpenFindReplace={() => setIsFindReplaceOpen(true)}
+            onOpenFormulaGuide={() => setIsFormulaGuideOpen(true)}
+            onOpenPrivacyModal={() => setIsPrivacyModalOpen(true)}
+            onOpenShortcutsModal={() => setIsShortcutsModalOpen(true)}
+            onRequestLoadTemplate={handleRequestLoadTemplate}
+            deferredInstallPrompt={deferredInstallPrompt}
+            onInstallClick={handleInstallClick}
+          />
+
+          {/* Formula & Coordinate Bar */}
+          <FormulaBar
+            activeCellCoord={activeCellCoord}
+            activeCellText={activeCellText}
+            onCommitCellText={handleCommitCellText}
+            onOpenFormulaGuide={() => setIsFormulaGuideOpen(true)}
+            selectionStats={selectionStats}
+          />
+
+          {/* Main Grid View */}
+          <div className="flex-1 w-full relative flex flex-col overflow-hidden">
+            <SpreadsheetGrid
+              ref={gridRef}
+              initialData={spreadsheetData}
+              onDataChange={(newData) => setSpreadsheetData(newData)}
+              onActiveCellChange={handleActiveCellChange}
+              onSelectionStatsChange={handleSelectionStatsChange}
+              onPrintRequest={handlePrint}
+              onAllSheetsDeleted={handleAllSheetsDeleted}
+            />
+          </div>
+        </>
+      )}
 
       {/* Drag & Drop Visual Indicator */}
       <DragDropOverlay isDragging={isDragging} />

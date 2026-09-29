@@ -14,6 +14,7 @@ export interface SpreadsheetGridRef {
   undo: () => void;
   redo: () => void;
   clearCurrentSheet: () => void;
+  deleteCurrentSheet: () => void;
   reRender: () => void;
   selectCell: (sheetIndex: number, rowIndex: number, colIndex: number) => void;
   getActiveSheetName: () => string;
@@ -30,6 +31,7 @@ interface SpreadsheetGridProps {
   onActiveCellChange: (coord: string, text: string, rowIndex: number, colIndex: number) => void;
   onSelectionStatsChange: (stats: SelectionStats | null) => void;
   onPrintRequest?: () => void;
+  onAllSheetsDeleted?: () => void;
 }
 
 export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridProps>(
@@ -40,6 +42,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       onActiveCellChange,
       onSelectionStatsChange,
       onPrintRequest,
+      onAllSheetsDeleted,
     },
     ref
   ) => {
@@ -57,6 +60,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
     const onActiveCellChangeRef = useRef(onActiveCellChange);
     const onSelectionStatsChangeRef = useRef(onSelectionStatsChange);
     const onPrintRequestRef = useRef(onPrintRequest);
+    const onAllSheetsDeletedRef = useRef(onAllSheetsDeleted);
 
     const handleSelectAllRef = useRef<() => void>(() => {});
     const autofitColumnRef = useRef<(colIndex: number) => void>(() => {});
@@ -67,6 +71,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       onActiveCellChangeRef.current = onActiveCellChange;
       onSelectionStatsChangeRef.current = onSelectionStatsChange;
       onPrintRequestRef.current = onPrintRequest;
+      onAllSheetsDeletedRef.current = onAllSheetsDeleted;
     });
 
     // Expose handles to parent
@@ -110,6 +115,18 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           spreadsheetInstanceRef.current.reRender();
           onDataChangeRef.current(spreadsheetInstanceRef.current.getData());
         }
+      },
+      deleteCurrentSheet: () => {
+        const s = spreadsheetInstanceRef.current;
+        if (!s) return;
+        if (!s.datas || s.datas.length <= 1) {
+          onAllSheetsDeletedRef.current?.();
+          return;
+        }
+        if (s.bottombar) {
+          s.bottombar.deleteEl = s.bottombar.activeEl;
+        }
+        s.deleteSheet?.();
       },
       reRender: () => {
         spreadsheetInstanceRef.current?.sheet?.reload?.();
@@ -199,6 +216,23 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       }
 
       spreadsheetInstanceRef.current = s;
+
+      // Intercept deleteSheet to handle deleting the last sheet or multi-sheet deletion
+      if (typeof (s as any).deleteSheet === 'function') {
+        const origDeleteSheet = (s as any).deleteSheet.bind(s);
+        (s as any).deleteSheet = function () {
+          if (!s.datas || s.datas.length <= 1) {
+            onAllSheetsDeletedRef.current?.();
+            return;
+          }
+          origDeleteSheet();
+          if (s.datas.length === 0) {
+            onAllSheetsDeletedRef.current?.();
+            return;
+          }
+          onDataChangeRef.current(s.getData());
+        };
+      }
 
       // Load initial data on mount only (normalized for merges)
       const normalizedInitial = normalizeSpreadsheetData(initialDataRef.current);

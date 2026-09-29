@@ -4,6 +4,7 @@ import {
   FolderOpen,
   Download,
   FilePlus,
+  Home,
   Printer,
   FileText,
   Code,
@@ -25,6 +26,7 @@ import { SAMPLE_TEMPLATES } from '../utils/sampleData';
 interface HeaderProps {
   filename: string;
   onFilenameChange: (name: string) => void;
+  onNavigateHome: () => void;
   onRequestNewSpreadsheet: () => void;
   onOpenFileClick: () => void;
   onExport: (format: 'xlsx' | 'csv' | 'json' | 'html') => void;
@@ -32,16 +34,20 @@ interface HeaderProps {
   onUndo: () => void;
   onRedo: () => void;
   onRequestClearSheet: () => void;
+  onRequestDeleteSheet?: () => void;
   onOpenFindReplace: () => void;
   onOpenFormulaGuide: () => void;
   onOpenPrivacyModal: () => void;
   onOpenShortcutsModal: () => void;
   onRequestLoadTemplate: (templateId: string) => void;
+  deferredInstallPrompt?: any;
+  onInstallClick?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   filename,
   onFilenameChange,
+  onNavigateHome,
   onRequestNewSpreadsheet,
   onOpenFileClick,
   onExport,
@@ -49,15 +55,20 @@ export const Header: React.FC<HeaderProps> = ({
   onUndo,
   onRedo,
   onRequestClearSheet,
+  onRequestDeleteSheet,
   onOpenFindReplace,
   onOpenFormulaGuide,
   onOpenPrivacyModal,
   onOpenShortcutsModal,
   onRequestLoadTemplate,
+  deferredInstallPrompt: propDeferredInstallPrompt,
+  onInstallClick: propOnInstallClick,
 }) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(filename);
-  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<any>(null);
+  const [localDeferredInstallPrompt, setLocalDeferredInstallPrompt] = useState<any>(null);
+
+  const deferredInstallPrompt = propDeferredInstallPrompt !== undefined ? propDeferredInstallPrompt : localDeferredInstallPrompt;
 
   // Trigger button refs for native Popover positioning
   const fileBtnRef = useRef<HTMLButtonElement>(null);
@@ -65,25 +76,30 @@ export const Header: React.FC<HeaderProps> = ({
   const templatesBtnRef = useRef<HTMLButtonElement>(null);
   const exportBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Listen for Chromium beforeinstallprompt event
+  // Listen for Chromium beforeinstallprompt event if not provided via props
   useEffect(() => {
+    if (propDeferredInstallPrompt !== undefined) return;
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredInstallPrompt(e);
+      setLocalDeferredInstallPrompt(e);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [propDeferredInstallPrompt]);
 
   const handleInstallClick = async () => {
+    if (propOnInstallClick) {
+      propOnInstallClick();
+      return;
+    }
     if (!deferredInstallPrompt) return;
     deferredInstallPrompt.prompt();
     const { outcome } = await deferredInstallPrompt.userChoice;
     if (outcome === 'accepted') {
-      setDeferredInstallPrompt(null);
+      setLocalDeferredInstallPrompt(null);
     }
   };
 
@@ -119,15 +135,20 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Top Application Bar */}
       <div className="h-12 px-4 flex items-center justify-between gap-4 border-b border-slate-100">
         <div className="flex items-center gap-3">
-          {/* Brand Icon & Name */}
-          <div className="flex items-center gap-2">
+          {/* Brand Icon & Name with Home Navigation */}
+          <button
+            type="button"
+            onClick={onNavigateHome}
+            className="flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity"
+            title="Return to Home Screen"
+          >
             <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
               <FileSpreadsheet className="w-4.5 h-4.5" />
             </div>
             <span className="font-bold text-base text-slate-900 tracking-tight hidden sm:inline">
               Web<span className="text-blue-600">Sheet</span>
             </span>
-          </div>
+          </button>
 
           <div className="h-4 w-px bg-slate-200 hidden sm:block" />
 
@@ -315,6 +336,18 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           onClick={(e) => {
             closePopover(e);
+            onNavigateHome();
+          }}
+          className="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2 cursor-pointer"
+        >
+          <Home className="w-4 h-4 text-slate-500" />
+          <span>Home Screen</span>
+        </button>
+        <div className="my-1 border-t border-slate-100" />
+        <button
+          type="button"
+          onClick={(e) => {
+            closePopover(e);
             onRequestNewSpreadsheet();
           }}
           className="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2 cursor-pointer"
@@ -466,6 +499,17 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <Trash2 className="w-4 h-4 text-red-500" />
           <span>Clear Active Sheet</span>
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            closePopover(e);
+            onRequestDeleteSheet?.();
+          }}
+          className="w-full px-3 py-1.5 text-left text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
+        >
+          <Trash2 className="w-4 h-4 text-red-500" />
+          <span>Delete Active Sheet</span>
         </button>
       </div>
 

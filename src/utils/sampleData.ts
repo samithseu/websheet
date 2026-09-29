@@ -24,124 +24,224 @@ export const SAMPLE_TEMPLATES: SampleTemplate[] = [
           2: { width: 120 },
           3: { width: 140 },
         },
+        styles: [
+          // 0: Main Title Header
+          {
+            font: { bold: true, size: 12 },
+            bgcolor: '#f1f5f9',
+            color: '#0f172a',
+            align: 'left',
+            border: {
+              top: ['thin', '#94a3b8'],
+              bottom: ['thin', '#94a3b8'],
+              left: ['thin', '#94a3b8'],
+              right: ['thin', '#94a3b8'],
+            },
+          },
+          // 1: Section Category Banner ("INCOME", "EXPENSES")
+          {
+            font: { bold: true, size: 10 },
+            bgcolor: '#e2e8f0',
+            color: '#1e293b',
+            align: 'left',
+            border: {
+              top: ['thin', '#94a3b8'],
+              bottom: ['thin', '#94a3b8'],
+              left: ['thin', '#94a3b8'],
+              right: ['thin', '#94a3b8'],
+            },
+          },
+          // 2: Table Column Header (Text - Left)
+          {
+            font: { bold: true, size: 10 },
+            bgcolor: '#f8fafc',
+            color: '#334155',
+            align: 'left',
+            border: {
+              top: ['thin', '#cbd5e1'],
+              bottom: ['medium', '#64748b'],
+              left: ['thin', '#cbd5e1'],
+              right: ['thin', '#cbd5e1'],
+            },
+          },
+          // 3: Table Column Header (Numeric - Right)
+          {
+            font: { bold: true, size: 10 },
+            bgcolor: '#f8fafc',
+            color: '#334155',
+            align: 'right',
+            border: {
+              top: ['thin', '#cbd5e1'],
+              bottom: ['medium', '#64748b'],
+              left: ['thin', '#cbd5e1'],
+              right: ['thin', '#cbd5e1'],
+            },
+          },
+          // 4: Data Cell (Text - Left)
+          {
+            align: 'left',
+            border: {
+              top: ['thin', '#e2e8f0'],
+              bottom: ['thin', '#e2e8f0'],
+              left: ['thin', '#cbd5e1'],
+              right: ['thin', '#cbd5e1'],
+            },
+          },
+          // 5: Data Cell (Numeric / Formula - Right)
+          {
+            align: 'right',
+            border: {
+              top: ['thin', '#e2e8f0'],
+              bottom: ['thin', '#e2e8f0'],
+              left: ['thin', '#cbd5e1'],
+              right: ['thin', '#cbd5e1'],
+            },
+          },
+          // 6: Total / Summary Row (Label - Left)
+          {
+            font: { bold: true, size: 10 },
+            bgcolor: '#f8fafc',
+            color: '#0f172a',
+            align: 'left',
+            border: {
+              top: ['thin', '#94a3b8'],
+              bottom: ['medium', '#64748b'],
+              left: ['thin', '#cbd5e1'],
+              right: ['thin', '#cbd5e1'],
+            },
+          },
+          // 7: Total / Summary Row (Values - Right)
+          {
+            font: { bold: true, size: 10 },
+            bgcolor: '#f8fafc',
+            color: '#0f172a',
+            align: 'right',
+            border: {
+              top: ['thin', '#94a3b8'],
+              bottom: ['medium', '#64748b'],
+              left: ['thin', '#cbd5e1'],
+              right: ['thin', '#cbd5e1'],
+            },
+          },
+        ],
         rows: {
           0: {
             cells: {
-              0: { text: 'Monthly Personal Budget & Expenses', merge: [0, 3] },
+              0: { text: 'Monthly Personal Budget & Expenses', merge: [0, 3], style: 0 },
             },
           },
           2: {
             cells: {
-              0: { text: 'INCOME', merge: [0, 3] },
+              0: { text: 'INCOME', merge: [0, 3], style: 1 },
             },
           },
           3: {
             cells: {
-              0: { text: 'Source' },
-              1: { text: 'Expected ($)' },
-              2: { text: 'Actual ($)' },
-              3: { text: 'Difference ($)' },
+              0: { text: 'Source', style: 2 },
+              1: { text: 'Expected ($)', style: 3 },
+              2: { text: 'Actual ($)', style: 3 },
+              3: { text: 'Difference ($)', style: 3 },
             },
           },
           4: {
             cells: {
-              0: { text: 'Primary Salary' },
-              1: { text: '4500' },
-              2: { text: '4500' },
-              3: { text: '=C5-B5' },
+              0: { text: 'Primary Salary', style: 4 },
+              1: { text: '4500', style: 5 },
+              2: { text: '4500', style: 5 },
+              3: { text: '=C5-B5', style: 5 },
             },
           },
           5: {
             cells: {
-              0: { text: 'Freelance & Consulting' },
-              1: { text: '1200' },
-              2: { text: '1450' },
-              3: { text: '=C6-B6' },
+              0: { text: 'Freelance & Consulting', style: 4 },
+              1: { text: '1200', style: 5 },
+              2: { text: '1450', style: 5 },
+              3: { text: '=C6-B6', style: 5 },
             },
           },
           6: {
             cells: {
-              0: { text: 'Investments / Dividends' },
-              1: { text: '300' },
-              2: { text: '280' },
-              3: { text: '=C7-B7' },
+              0: { text: 'Investments / Dividends', style: 4 },
+              1: { text: '300', style: 5 },
+              2: { text: '280', style: 5 },
+              3: { text: '=C7-B7', style: 5 },
             },
           },
           7: {
             cells: {
-              0: { text: 'Total Income' },
-              1: { text: '=SUM(B5:B7)' },
-              2: { text: '=SUM(C5:C7)' },
-              3: { text: '=C8-B8' },
+              0: { text: 'Total Income', style: 6 },
+              1: { text: '=SUM(B5:B7)', style: 7 },
+              2: { text: '=SUM(C5:C7)', style: 7 },
+              3: { text: '=C8-B8', style: 7 },
             },
           },
           9: {
             cells: {
-              0: { text: 'EXPENSES', merge: [0, 3] },
+              0: { text: 'EXPENSES', merge: [0, 3], style: 1 },
             },
           },
           10: {
             cells: {
-              0: { text: 'Category' },
-              1: { text: 'Budget ($)' },
-              2: { text: 'Actual ($)' },
-              3: { text: 'Remaining ($)' },
+              0: { text: 'Category', style: 2 },
+              1: { text: 'Budget ($)', style: 3 },
+              2: { text: 'Actual ($)', style: 3 },
+              3: { text: 'Remaining ($)', style: 3 },
             },
           },
           11: {
             cells: {
-              0: { text: 'Rent / Mortgage' },
-              1: { text: '1800' },
-              2: { text: '1800' },
-              3: { text: '=B12-C12' },
+              0: { text: 'Rent / Mortgage', style: 4 },
+              1: { text: '1800', style: 5 },
+              2: { text: '1800', style: 5 },
+              3: { text: '=B12-C12', style: 5 },
             },
           },
           12: {
             cells: {
-              0: { text: 'Groceries & Dining' },
-              1: { text: '600' },
-              2: { text: '645' },
-              3: { text: '=B13-C13' },
+              0: { text: 'Groceries & Dining', style: 4 },
+              1: { text: '600', style: 5 },
+              2: { text: '645', style: 5 },
+              3: { text: '=B13-C13', style: 5 },
             },
           },
           13: {
             cells: {
-              0: { text: 'Utilities & Internet' },
-              1: { text: '250' },
-              2: { text: '230' },
-              3: { text: '=B14-C14' },
+              0: { text: 'Utilities & Internet', style: 4 },
+              1: { text: '250', style: 5 },
+              2: { text: '230', style: 5 },
+              3: { text: '=B14-C14', style: 5 },
             },
           },
           14: {
             cells: {
-              0: { text: 'Transportation / Fuel' },
-              1: { text: '200' },
-              2: { text: '190' },
-              3: { text: '=B15-C15' },
+              0: { text: 'Transportation / Fuel', style: 4 },
+              1: { text: '200', style: 5 },
+              2: { text: '190', style: 5 },
+              3: { text: '=B15-C15', style: 5 },
             },
           },
           15: {
             cells: {
-              0: { text: 'Entertainment & Hobbies' },
-              1: { text: '250' },
-              2: { text: '310' },
-              3: { text: '=B16-C16' },
+              0: { text: 'Entertainment & Hobbies', style: 4 },
+              1: { text: '250', style: 5 },
+              2: { text: '310', style: 5 },
+              3: { text: '=B16-C16', style: 5 },
             },
           },
           16: {
             cells: {
-              0: { text: 'Total Expenses' },
-              1: { text: '=SUM(B12:B16)' },
-              2: { text: '=SUM(C12:C16)' },
-              3: { text: '=B17-C17' },
+              0: { text: 'Total Expenses', style: 6 },
+              1: { text: '=SUM(B12:B16)', style: 7 },
+              2: { text: '=SUM(C12:C16)', style: 7 },
+              3: { text: '=B17-C17', style: 7 },
             },
           },
           18: {
             cells: {
-              0: { text: 'Net Savings' },
-              1: { text: '=B8-B17' },
-              2: { text: '=C8-C17' },
-              3: { text: '=C19-B19' },
+              0: { text: 'Net Savings', style: 6 },
+              1: { text: '=B8-B17', style: 7 },
+              2: { text: '=C8-C17', style: 7 },
+              3: { text: '=C19-B19', style: 7 },
             },
           },
         },

@@ -23,6 +23,7 @@ export interface XSpreadsheetInstance {
   reRender: () => XSpreadsheetInstance;
   on: (event: string, handler: (...args: any[]) => void) => XSpreadsheetInstance;
   change: (handler: (data: any) => void) => XSpreadsheetInstance;
+  deleteSheet?: () => void;
   sheet: {
     data: XSpreadsheetDataProxy;
     undo: () => void;
@@ -34,6 +35,10 @@ export interface XSpreadsheetInstance {
     menu?: {
       items?: Array<{ el?: HTMLElement }>;
     };
+    items?: Array<any>;
+    activeEl?: any;
+    deleteEl?: any;
+    deleteItem?: () => [number, number] | [number];
   };
 }
 
