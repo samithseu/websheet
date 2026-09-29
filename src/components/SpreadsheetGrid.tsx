@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import type { XSpreadsheetData } from '../utils/spreadsheetConverter';
 import type { SelectionStats } from './FormulaBar';
 import { getSpreadsheetFactory, type XSpreadsheetInstance } from '../types/spreadsheet';
+import { calculateAutofitColumnWidth, calculateAutofitAllColumns } from '../utils/columnAutofit';
 
 export interface SpreadsheetGridRef {
   loadData: (data: XSpreadsheetData) => void;
@@ -16,6 +17,9 @@ export interface SpreadsheetGridRef {
   selectCell: (sheetIndex: number, rowIndex: number, colIndex: number) => void;
   getActiveSheetName: () => string;
   getActiveSheetIndex: () => number;
+  selectAll: () => void;
+  autofitColumn: (colIndex: number) => void;
+  autofitAllColumns: () => void;
 }
 
 interface SpreadsheetGridProps {
@@ -38,6 +42,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
     const containerRef = useRef<HTMLDivElement>(null);
     const spreadsheetInstanceRef = useRef<XSpreadsheetInstance | null>(null);
     const activeCellPosRef = useRef<{ r: number; c: number }>({ r: 0, c: 0 });
+    const isAllSelectedRef = useRef(false);
 
     // Initial data captured for mount only (per AGENTS.md)
     const initialDataRef = useRef(initialData);
@@ -46,6 +51,10 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
     const onDataChangeRef = useRef(onDataChange);
     const onActiveCellChangeRef = useRef(onActiveCellChange);
     const onSelectionStatsChangeRef = useRef(onSelectionStatsChange);
+
+    const handleSelectAllRef = useRef<() => void>(() => {});
+    const autofitColumnRef = useRef<(colIndex: number) => void>(() => {});
+    const autofitAllColumnsRef = useRef<() => void>(() => {});
 
     useEffect(() => {
       onDataChangeRef.current = onDataChange;
@@ -120,6 +129,15 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         const idx = s.datas.findIndex((d) => d === currentData);
         return idx >= 0 ? idx : 0;
       },
+      selectAll: () => {
+        handleSelectAllRef.current();
+      },
+      autofitColumn: (colIndex: number) => {
+        autofitColumnRef.current(colIndex);
+      },
+      autofitAllColumns: () => {
+        autofitAllColumnsRef.current();
+      },
     }));
 
     useEffect(() => {
@@ -167,6 +185,136 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       // Load initial data on mount only
       s.loadData(initialDataRef.current);
 
+      // Top-left "Select All" button (corner above row 1, left of column A)
+      const sheetEl = container.querySelector('.x-spreadsheet-sheet') as HTMLElement | null;
+      const indexWidth = (s as any).sheet?.data?.cols?.indexWidth || 60;
+      const rowHeight = (s as any).sheet?.data?.rows?.height || 26;
+
+      const selectAllBtn = document.createElement('button');
+      selectAllBtn.type = 'button';
+      selectAllBtn.className = 'x-spreadsheet-select-all-btn';
+      selectAllBtn.title = 'Select all cells';
+      selectAllBtn.setAttribute('aria-label', 'Select all cells');
+      Object.assign(selectAllBtn.style, {
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        width: `${indexWidth}px`,
+        height: `${rowHeight}px`,
+        zIndex: '12',
+        backgroundColor: '#f4f5f8',
+        borderRight: '1px solid #e6e6e6',
+        borderBottom: '1px solid #e6e6e6',
+        borderTop: 'none',
+        borderLeft: 'none',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'flex-end',
+        padding: '0 4px 4px 0',
+        outline: 'none',
+        transition: 'background-color 0.15s ease, border-color 0.15s ease',
+      });
+
+      selectAllBtn.innerHTML = `
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" style="pointer-events: none;">
+          <polygon points="8,0 8,8 0,8" fill="#94a3b8" />
+        </svg>
+      `;
+
+      const updateSelectAllBtnVisual = () => {
+        const poly = selectAllBtn.querySelector('polygon');
+        if (isAllSelectedRef.current) {
+          selectAllBtn.style.backgroundColor = '#dbeafe';
+          selectAllBtn.style.borderRightColor = '#93c5fd';
+          selectAllBtn.style.borderBottomColor = '#93c5fd';
+          if (poly) poly.setAttribute('fill', '#2563eb');
+        } else {
+          selectAllBtn.style.backgroundColor = '#f4f5f8';
+          selectAllBtn.style.borderRightColor = '#e6e6e6';
+          selectAllBtn.style.borderBottomColor = '#e6e6e6';
+          if (poly) poly.setAttribute('fill', '#94a3b8');
+        }
+      };
+
+      const updateSelectAllBtnPosition = () => {
+        const iw = (s as any).sheet?.data?.cols?.indexWidth || 60;
+        const rh = (s as any).sheet?.data?.rows?.height || 26;
+        selectAllBtn.style.width = `${iw}px`;
+        selectAllBtn.style.height = `${rh}px`;
+      };
+
+      selectAllBtn.addEventListener('mouseenter', () => {
+        if (!isAllSelectedRef.current) {
+          selectAllBtn.style.backgroundColor = '#e2e8f0';
+        }
+      });
+
+      selectAllBtn.addEventListener('mouseleave', () => {
+        if (!isAllSelectedRef.current) {
+          selectAllBtn.style.backgroundColor = '#f4f5f8';
+        }
+      });
+
+      const handleSelectAll = () => {
+        const sheet = (s as any).sheet;
+        if (!sheet?.data || !sheet?.selector) return;
+        const { data, selector, table, toolbar } = sheet;
+
+        selector.set(-1, -1);
+        sheet.trigger('cells-selected', data.getCell(0, 0), selector.range);
+        toolbar?.reset?.();
+        table.render();
+
+        isAllSelectedRef.current = true;
+        updateSelectAllBtnVisual();
+
+        const startCoord = XLSX.utils.encode_cell({ r: 0, c: 0 });
+        const endCoord = XLSX.utils.encode_cell({ r: data.rows.len - 1, c: data.cols.len - 1 });
+        const rangeCoord = `${startCoord}:${endCoord}`;
+        const firstCell = data.getCell(0, 0);
+        const text = firstCell?.text !== undefined ? String(firstCell.text) : '';
+        onActiveCellChangeRef.current(rangeCoord, text, 0, 0);
+      };
+
+      selectAllBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleSelectAll();
+      });
+
+      sheetEl?.appendChild(selectAllBtn);
+
+      // Auto-fit helper implementations
+      const autofitColumnIndex = (colIndex: number) => {
+        const sheet = (s as any).sheet;
+        if (!sheet?.data) return;
+        const newWidth = calculateAutofitColumnWidth(sheet.data, colIndex);
+        sheet.data.changeData(() => {
+          sheet.data.cols.setWidth(colIndex, newWidth);
+        });
+        sheet.reload();
+        sheet.colResizer?.hide();
+        onDataChangeRef.current(s.getData());
+      };
+
+      const autofitAllColumns = () => {
+        const sheet = (s as any).sheet;
+        if (!sheet?.data) return;
+        const colWidths = calculateAutofitAllColumns(sheet.data);
+        sheet.data.changeData(() => {
+          for (const [ci, width] of colWidths.entries()) {
+            sheet.data.cols.setWidth(ci, width);
+          }
+        });
+        sheet.reload();
+        sheet.colResizer?.hide();
+        onDataChangeRef.current(s.getData());
+      };
+
+      handleSelectAllRef.current = handleSelectAll;
+      autofitColumnRef.current = autofitColumnIndex;
+      autofitAllColumnsRef.current = autofitAllColumns;
+
       // Bind change handler
       s.change((data: any) => {
         onDataChangeRef.current(data);
@@ -181,6 +329,8 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
 
       // Bind cell selected
       s.on('cell-selected', (cell: any, ri: number, ci: number) => {
+        isAllSelectedRef.current = false;
+        updateSelectAllBtnVisual();
         activeCellPosRef.current = { r: ri, c: ci };
         const coord = XLSX.utils.encode_cell({ r: ri, c: ci });
         const text = cell?.text !== undefined ? String(cell.text) : '';
@@ -190,6 +340,11 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
 
       // Bind multiple cells selected for stats
       s.on('cells-selected', (_cell: any, { sri, sci, eri, eci }: any) => {
+        const totalRows = (s as any).sheet?.data?.rows?.len || 100;
+        const totalCols = (s as any).sheet?.data?.cols?.len || 26;
+        isAllSelectedRef.current = sri === 0 && sci === 0 && eri >= totalRows - 1 && eci >= totalCols - 1;
+        updateSelectAllBtnVisual();
+
         const startCoord = XLSX.utils.encode_cell({ r: sri, c: sci });
         const endCoord = XLSX.utils.encode_cell({ r: eri, c: eci });
         const rangeCoord = startCoord === endCoord ? startCoord : `${startCoord}:${endCoord}`;
@@ -244,6 +399,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
 
       // Resize observer to adapt spreadsheet canvas
       const handleResize = () => {
+        updateSelectAllBtnPosition();
         s.sheet?.reload?.();
       };
 
@@ -379,6 +535,106 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         }
       };
 
+      // Detect column border index for auto-fit interactions
+      const getColumnBorderIndex = (evt: MouseEvent): number | null => {
+        const sheet = (s as any).sheet;
+        if (!sheet?.data) return null;
+        const target = evt.target as HTMLElement | null;
+
+        // 1. Direct hit on colResizer hover or line element
+        if (target?.closest('.x-spreadsheet-resizer.vertical')) {
+          const ci = sheet.colResizer?.cRect?.ci;
+          if (typeof ci === 'number' && ci >= 0) return ci;
+        }
+
+        // 2. Hit on overlayer in the column header row
+        const overlayer = container.querySelector('.x-spreadsheet-overlayer') as HTMLElement | null;
+        if (overlayer && (target === overlayer || overlayer.contains(target))) {
+          const rect = overlayer.getBoundingClientRect();
+          const offsetX = evt.clientX - rect.left;
+          const offsetY = evt.clientY - rect.top;
+          const rowHeight = sheet.data.rows?.height || 26;
+          if (offsetY >= 0 && offsetY <= rowHeight) {
+            const cRect = sheet.data.getCellRectByXY(offsetX, offsetY);
+            if (cRect.ri === -1 && cRect.ci >= 0) {
+              // Right edge of column cRect.ci (within 7px)
+              const rightEdge = cRect.left + cRect.width;
+              if (Math.abs(offsetX - rightEdge) <= 7) {
+                return cRect.ci;
+              }
+              // Left edge of column cRect.ci (within 5px) = right edge of column cRect.ci - 1
+              if (cRect.ci > 0 && Math.abs(offsetX - cRect.left) <= 5) {
+                return cRect.ci - 1;
+              }
+            }
+          }
+        }
+
+        return null;
+      };
+
+      let borderMouseDownTime = 0;
+      let borderMouseDownX = 0;
+      let borderMouseDownY = 0;
+      let borderTargetCol: number | null = null;
+      let lastBorderClickTime = 0;
+      let lastBorderClickCol: number | null = null;
+
+      const handleBorderMouseDown = (e: MouseEvent) => {
+        if (e.button !== 0) return;
+        const colIndex = getColumnBorderIndex(e);
+        if (colIndex !== null) {
+          borderMouseDownTime = Date.now();
+          borderMouseDownX = e.clientX;
+          borderMouseDownY = e.clientY;
+          borderTargetCol = colIndex;
+        } else {
+          borderTargetCol = null;
+        }
+      };
+
+      const handleBorderMouseUp = (e: MouseEvent) => {
+        if (borderTargetCol === null) return;
+        const colIndex = borderTargetCol;
+        borderTargetCol = null;
+
+        const duration = Date.now() - borderMouseDownTime;
+        const dist = Math.hypot(e.clientX - borderMouseDownX, e.clientY - borderMouseDownY);
+
+        // Discard drag gestures (manual column width resize)
+        if (duration > 400 || dist > 4) return;
+
+        const now = Date.now();
+        const isDoubleClick = (now - lastBorderClickTime < 450) && (lastBorderClickCol === colIndex);
+
+        lastBorderClickTime = now;
+        lastBorderClickCol = colIndex;
+
+        if (isAllSelectedRef.current) {
+          // When all cells are selected: either a single click or double click resizes all columns
+          autofitAllColumns();
+        } else if (isDoubleClick) {
+          // Double clicking on a column's right border resizes that column
+          autofitColumnIndex(colIndex);
+        }
+      };
+
+      const handleBorderDblClick = (e: MouseEvent) => {
+        if (e.button !== 0) return;
+        const colIndex = getColumnBorderIndex(e);
+        if (colIndex !== null) {
+          if (isAllSelectedRef.current) {
+            autofitAllColumns();
+          } else {
+            autofitColumnIndex(colIndex);
+          }
+        }
+      };
+
+      container.addEventListener('mousedown', handleBorderMouseDown, true);
+      window.addEventListener('mouseup', handleBorderMouseUp, true);
+      container.addEventListener('dblclick', handleBorderDblClick, true);
+
       container.addEventListener('mousedown', handleContainerMouseDown);
       window.addEventListener('mousemove', handleWindowMouseMove);
       window.addEventListener('mouseup', handleWindowMouseUp);
@@ -386,6 +642,9 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       return () => {
         cancelled = true;
         stopAutoScroll();
+        container.removeEventListener('mousedown', handleBorderMouseDown, true);
+        window.removeEventListener('mouseup', handleBorderMouseUp, true);
+        container.removeEventListener('dblclick', handleBorderDblClick, true);
         container.removeEventListener('mousedown', handleContainerMouseDown);
         window.removeEventListener('mousemove', handleWindowMouseMove);
         window.removeEventListener('mouseup', handleWindowMouseUp);
