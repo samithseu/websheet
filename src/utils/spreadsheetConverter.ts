@@ -118,6 +118,47 @@ export function isFormulaSupportedByGrid(formula: string): boolean {
 }
 
 /**
+ * Auto-closes any unclosed opening parentheses in a formula string.
+ * Respects string literals enclosed in double quotes.
+ * Example: "=SUM(A1:A5" -> "=SUM(A1:A5)"
+ */
+export function autoCloseParentheses(text: string): string {
+  if (!text || !text.startsWith('=')) return text;
+  let openCount = 0;
+  let inString = false;
+  for (let i = 1; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"' && text[i - 1] !== '\\') {
+      inString = !inString;
+    } else if (!inString) {
+      if (ch === '(') openCount++;
+      else if (ch === ')') openCount = Math.max(0, openCount - 1);
+    }
+  }
+  if (openCount > 0) {
+    return text + ')'.repeat(openCount);
+  }
+  return text;
+}
+
+/**
+ * Determines whether a formula currently expects a cell or range reference operand.
+ * For example:
+ * - "=" -> true
+ * - "=SUM(" -> true
+ * - "=A1+" -> true
+ * - "=SUM(A1," -> true
+ * - "=SUM(A1:A5)" -> false
+ */
+export function isFormulaAwaitingOperand(formula: string): boolean {
+  if (!formula || typeof formula !== 'string' || !formula.startsWith('=')) return false;
+  const trimmed = formula.trimEnd();
+  if (trimmed === '=') return true;
+  const lastChar = trimmed[trimmed.length - 1];
+  return ['(', ',', ':', '+', '-', '*', '/', '^', '&', '=', '<', '>'].includes(lastChar);
+}
+
+/**
  * Ensures two-way synchronization between `sheet.merges` and `cell.merge`
  * for proper canvas box rendering in x-data-spreadsheet and reliable SheetJS exports.
  */

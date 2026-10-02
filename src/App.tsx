@@ -1,15 +1,28 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Header } from './components/Header';
 import { HomeScreen } from './components/HomeScreen';
 import { FormulaBar, type SelectionStats } from './components/FormulaBar';
 import { SpreadsheetGrid, type SpreadsheetGridRef } from './components/SpreadsheetGrid';
 import { DragDropOverlay } from './components/DragDropOverlay';
-import { FindReplaceDialog } from './components/FindReplaceDialog';
-import { FormulaGuideDialog } from './components/FormulaGuideDialog';
-import { PrivacyDialog } from './components/PrivacyDialog';
-import { ShortcutsDialog } from './components/ShortcutsDialog';
-import { ConfirmDialog } from './components/ConfirmDialog';
-import { PrintDialog } from './components/PrintDialog';
+
+const FindReplaceDialog = lazy(() =>
+  import('./components/FindReplaceDialog').then((m) => ({ default: m.FindReplaceDialog }))
+);
+const FormulaGuideDialog = lazy(() =>
+  import('./components/FormulaGuideDialog').then((m) => ({ default: m.FormulaGuideDialog }))
+);
+const PrivacyDialog = lazy(() =>
+  import('./components/PrivacyDialog').then((m) => ({ default: m.PrivacyDialog }))
+);
+const ShortcutsDialog = lazy(() =>
+  import('./components/ShortcutsDialog').then((m) => ({ default: m.ShortcutsDialog }))
+);
+const ConfirmDialog = lazy(() =>
+  import('./components/ConfirmDialog').then((m) => ({ default: m.ConfirmDialog }))
+);
+const PrintDialog = lazy(() =>
+  import('./components/PrintDialog').then((m) => ({ default: m.PrintDialog }))
+);
 import {
   readSpreadsheetFile,
   workbookToXSpreadsheet,
@@ -401,6 +414,11 @@ export function App() {
     [activeCellRow, activeCellCol]
   );
 
+  const handleFormulaBarTextChange = useCallback((text: string) => {
+    setActiveCellText(text);
+    gridRef.current?.syncFormulaText(text);
+  }, []);
+
   // Insert formula from FormulaGuide
   const handleInsertFormula = useCallback(
     (formulaTemplate: string) => {
@@ -558,6 +576,7 @@ export function App() {
             activeCellCoord={activeCellCoord}
             activeCellText={activeCellText}
             onCommitCellText={handleCommitCellText}
+            onTextChange={handleFormulaBarTextChange}
             onOpenFormulaGuide={() => setIsFormulaGuideOpen(true)}
             selectionStats={selectionStats}
           />
@@ -581,55 +600,57 @@ export function App() {
       <DragDropOverlay isDragging={isDragging} />
 
       {/* Native <dialog> Modals */}
-      {printPayload && (
-        <PrintDialog
-          isOpen={true}
-          onClose={() => setPrintPayload(null)}
-          data={printPayload.data}
-          activeSheetIndex={printPayload.activeSheetIndex}
-          selectedRange={printPayload.selectedRange}
-          filename={filename}
+      <Suspense fallback={null}>
+        {printPayload && (
+          <PrintDialog
+            isOpen={true}
+            onClose={() => setPrintPayload(null)}
+            data={printPayload.data}
+            activeSheetIndex={printPayload.activeSheetIndex}
+            selectedRange={printPayload.selectedRange}
+            filename={filename}
+          />
+        )}
+
+        <FindReplaceDialog
+          isOpen={isFindReplaceOpen}
+          onClose={() => setIsFindReplaceOpen(false)}
+          spreadsheetData={spreadsheetData}
+          onSelectCell={(sheetIdx, r, c) => gridRef.current?.selectCell(sheetIdx, r, c)}
+          onUpdateData={(newData, msg) => {
+            gridRef.current?.loadData(newData);
+            setSpreadsheetData(newData);
+            if (msg) showToast(msg);
+          }}
         />
-      )}
 
-      <FindReplaceDialog
-        isOpen={isFindReplaceOpen}
-        onClose={() => setIsFindReplaceOpen(false)}
-        spreadsheetData={spreadsheetData}
-        onSelectCell={(sheetIdx, r, c) => gridRef.current?.selectCell(sheetIdx, r, c)}
-        onUpdateData={(newData, msg) => {
-          gridRef.current?.loadData(newData);
-          setSpreadsheetData(newData);
-          if (msg) showToast(msg);
-        }}
-      />
-
-      <FormulaGuideDialog
-        isOpen={isFormulaGuideOpen}
-        onClose={() => setIsFormulaGuideOpen(false)}
-        onInsertFormula={handleInsertFormula}
-      />
-
-      <PrivacyDialog
-        isOpen={isPrivacyModalOpen}
-        onClose={() => setIsPrivacyModalOpen(false)}
-      />
-
-      <ShortcutsDialog
-        isOpen={isShortcutsModalOpen}
-        onClose={() => setIsShortcutsModalOpen(false)}
-      />
-
-      {confirmConfig && (
-        <ConfirmDialog
-          isOpen={confirmConfig.isOpen}
-          title={confirmConfig.title}
-          description={confirmConfig.description}
-          confirmLabel={confirmConfig.confirmLabel}
-          onConfirm={confirmConfig.onConfirm}
-          onCancel={() => setConfirmConfig(null)}
+        <FormulaGuideDialog
+          isOpen={isFormulaGuideOpen}
+          onClose={() => setIsFormulaGuideOpen(false)}
+          onInsertFormula={handleInsertFormula}
         />
-      )}
+
+        <PrivacyDialog
+          isOpen={isPrivacyModalOpen}
+          onClose={() => setIsPrivacyModalOpen(false)}
+        />
+
+        <ShortcutsDialog
+          isOpen={isShortcutsModalOpen}
+          onClose={() => setIsShortcutsModalOpen(false)}
+        />
+
+        {confirmConfig && (
+          <ConfirmDialog
+            isOpen={confirmConfig.isOpen}
+            title={confirmConfig.title}
+            description={confirmConfig.description}
+            confirmLabel={confirmConfig.confirmLabel}
+            onConfirm={confirmConfig.onConfirm}
+            onCancel={() => setConfirmConfig(null)}
+          />
+        )}
+      </Suspense>
 
       {/* Live Region Toast Notification */}
       <div

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { autoCloseParentheses } from '../utils/spreadsheetConverter';
 
 export interface SelectionStats {
   count: number;
@@ -13,6 +14,7 @@ interface FormulaBarProps {
   activeCellCoord: string;
   activeCellText: string;
   onCommitCellText: (text: string) => void;
+  onTextChange?: (text: string) => void;
   onOpenFormulaGuide: () => void;
   selectionStats: SelectionStats | null;
 }
@@ -21,6 +23,7 @@ export const FormulaBar: React.FC<FormulaBarProps> = ({
   activeCellCoord,
   activeCellText,
   onCommitCellText,
+  onTextChange,
   onOpenFormulaGuide,
   selectionStats,
 }) => {
@@ -37,7 +40,9 @@ export const FormulaBar: React.FC<FormulaBarProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      onCommitCellText(inputText);
+      const closed = autoCloseParentheses(inputText);
+      setInputText(closed);
+      onCommitCellText(closed);
     } else if (e.key === 'Escape') {
       setInputText(activeCellText);
     }
@@ -45,7 +50,8 @@ export const FormulaBar: React.FC<FormulaBarProps> = ({
 
   const handleBlur = () => {
     if (inputText !== activeCellText) {
-      onCommitCellText(inputText);
+      const textToCommit = inputText.startsWith('=') ? autoCloseParentheses(inputText) : inputText;
+      onCommitCellText(textToCommit);
     }
   };
 
@@ -82,7 +88,11 @@ export const FormulaBar: React.FC<FormulaBarProps> = ({
         <input
           type="text"
           value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value;
+            setInputText(val);
+            onTextChange?.(val);
+          }}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
           placeholder="Enter text, number, or formula starting with '='"

@@ -1,7 +1,13 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import 'x-data-spreadsheet';
 import * as XLSX from 'xlsx';
-import { normalizeSpreadsheetData, isFormulaSupportedByGrid, type XSpreadsheetData } from '../utils/spreadsheetConverter';
+import {
+  normalizeSpreadsheetData,
+  isFormulaSupportedByGrid,
+  autoCloseParentheses,
+  isFormulaAwaitingOperand,
+  type XSpreadsheetData,
+} from '../utils/spreadsheetConverter';
 import type { SelectionStats } from './FormulaBar';
 import { getSpreadsheetFactory, type XSpreadsheetInstance } from '../types/spreadsheet';
 import { calculateAutofitColumnWidth, calculateAutofitAllColumns } from '../utils/columnAutofit';
@@ -23,6 +29,7 @@ export interface SpreadsheetGridRef {
   autofitColumn: (colIndex: number) => void;
   autofitAllColumns: () => void;
   getSelectedRange: () => CellRange | null;
+  syncFormulaText: (text: string) => void;
 }
 
 interface SpreadsheetGridProps {
@@ -65,6 +72,31 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
     const handleSelectAllRef = useRef<() => void>(() => {});
     const autofitColumnRef = useRef<(colIndex: number) => void>(() => {});
     const autofitAllColumnsRef = useRef<() => void>(() => {});
+    const syncFormulaTextRef = useRef<(text: string) => void>(() => {});
+
+    interface FormulaRefSession {
+      isActive: boolean;
+      targetR: number;
+      targetC: number;
+      baseText: string;
+      hasActiveToken: boolean;
+      refRange: CellRange | null;
+      dragAnchor: { ri: number; ci: number } | null;
+      isDraggingRange: boolean;
+      originalText: string;
+    }
+
+    const formulaRefSessionRef = useRef<FormulaRefSession>({
+      isActive: false,
+      targetR: 0,
+      targetC: 0,
+      baseText: '',
+      hasActiveToken: false,
+      refRange: null,
+      dragAnchor: null,
+      isDraggingRange: false,
+      originalText: '',
+    });
 
     useEffect(() => {
       onDataChangeRef.current = onDataChange;
@@ -192,6 +224,9 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       getSelectedRange: () => {
         return selectedRangeRef.current;
       },
+      syncFormulaText: (text: string) => {
+        syncFormulaTextRef.current(text);
+      },
     }));
 
     useEffect(() => {
@@ -253,13 +288,57 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         };
       }
 
-      // Defensive try-catch around canvas table render
+      // Reference Highlight Overlay element for interactive formula reference selection
+      const overlayerCEl = (container.querySelector('.x-spreadsheet-overlayer-content') ||
+        container.querySelector('.x-spreadsheet-overlayer')) as HTMLElement | null;
+      const refHighlightEl = document.createElement('div');
+      refHighlightEl.className = 'x-spreadsheet-formula-ref-highlight';
+      Object.assign(refHighlightEl.style, {
+        position: 'absolute',
+        border: '2px dashed #2563eb',
+        backgroundColor: 'rgba(37, 99, 235, 0.09)',
+        borderRadius: '3px',
+        pointerEvents: 'none',
+        zIndex: '11',
+        display: 'none',
+        boxSizing: 'border-box',
+        transition: 'left 0.03s ease-out, top 0.03s ease-out, width 0.03s ease-out, height 0.03s ease-out',
+      });
+      overlayerCEl?.appendChild(refHighlightEl);
+
+      const updateRefHighlight = (range: CellRange | null) => {
+        if (!range) {
+          refHighlightEl.style.display = 'none';
+          return;
+        }
+        const currentSheet = (s as any).sheet;
+        if (!currentSheet?.data) return;
+        const rect = currentSheet.data.getRect(range);
+        if (!rect || rect.width <= 0 || rect.height <= 0) {
+          refHighlightEl.style.display = 'none';
+          return;
+        }
+        refHighlightEl.style.left = `${rect.left - 0.8}px`;
+        refHighlightEl.style.top = `${rect.top - 0.8}px`;
+        refHighlightEl.style.width = `${rect.width + 0.8}px`;
+        refHighlightEl.style.height = `${rect.height + 0.8}px`;
+        refHighlightEl.style.display = 'block';
+      };
+
+      const hideRefHighlight = () => {
+        refHighlightEl.style.display = 'none';
+      };
+
+      // Defensive try-catch around canvas table render & sync reference highlight overlay
       const sheetInstance = (s as any).sheet;
       if (sheetInstance?.table && typeof sheetInstance.table.render === 'function') {
         const origTableRender = sheetInstance.table.render.bind(sheetInstance.table);
         sheetInstance.table.render = function () {
           try {
             origTableRender();
+            if (formulaRefSessionRef.current.refRange) {
+              updateRefHighlight(formulaRefSessionRef.current.refRange);
+            }
           } catch (err) {
             console.warn('Spreadsheet canvas table render error caught safely:', err);
           }
@@ -296,7 +375,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         );
       }
 
-      // Wrap editor.setCell to guarantee opaque background matching cell bgcolor or white
+      // Wrap editor.setCell to guarantee opaque background and initialize formula session
       const editor = (s as any).sheet?.editor;
       if (editor && typeof editor.setCell === 'function') {
         const origSetCell = editor.setCell.bind(editor);
@@ -313,9 +392,93 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
             if (editor.areaEl?.el) {
               editor.areaEl.el.style.backgroundColor = bg;
             }
+
+            const currentCell = sheet.data.getCell(ri, ci);
+            const currentCellText = currentCell?.text !== undefined ? String(currentCell.text) : '';
+            const cellFormula = (currentCell as any)?.formula;
+            const currentFullText = cellFormula && !currentCellText.startsWith('=')
+              ? `=${cellFormula}`
+              : (editor.inputText || currentCellText);
+
+            formulaRefSessionRef.current = {
+              isActive: currentFullText.startsWith('='),
+              targetR: ri,
+              targetC: ci,
+              baseText: currentFullText,
+              hasActiveToken: false,
+              refRange: null,
+              dragAnchor: null,
+              isDraggingRange: false,
+              originalText: currentCellText,
+            };
+            hideRefHighlight();
           }
         };
       }
+
+      // Wrap editor.clear to ensure clean state and hide reference highlight
+      if (editor && typeof editor.clear === 'function') {
+        const origClear = editor.clear.bind(editor);
+        editor.clear = function () {
+          hideRefHighlight();
+          formulaRefSessionRef.current.isActive = false;
+          formulaRefSessionRef.current.hasActiveToken = false;
+          formulaRefSessionRef.current.refRange = null;
+          formulaRefSessionRef.current.isDraggingRange = false;
+          origClear();
+        };
+      }
+
+      // External sync from FormulaBar input
+      syncFormulaTextRef.current = (text: string) => {
+        const sheet = (s as any).sheet;
+        if (!sheet?.data || !sheet?.editor) return;
+
+        const { r, c } = activeCellPosRef.current;
+        const session = formulaRefSessionRef.current;
+        session.isActive = text.startsWith('=');
+        session.targetR = r;
+        session.targetC = c;
+        if (!session.hasActiveToken) {
+          session.baseText = text;
+        }
+
+        if (text.startsWith('=')) {
+          const editorEl = container.querySelector('.x-spreadsheet-editor') as HTMLElement | null;
+          const isEditing = editorEl && editorEl.style.display !== 'none';
+          if (!isEditing) {
+            const sOffset = sheet.data.getRect({ sri: r, sci: c, eri: r, eci: c });
+            const tOffset = sheet.getTableOffset();
+            const sPosition = sOffset.top > tOffset.height / 2 ? 'bottom' : 'top';
+            sheet.editor.setOffset(sOffset, sPosition);
+            const cell = sheet.data.getCell(r, c) || sheet.data.getSelectedCell();
+            sheet.editor.setCell(cell, sheet.data.getSelectedValidator());
+          }
+          sheet.editor.setText(text);
+        }
+      };
+
+      // Listen to keystrokes in editor textarea to track operators and argument boundaries
+      const handleEditorTextareaInput = () => {
+        const currentText = editor?.inputText || '';
+        const session = formulaRefSessionRef.current;
+        if (currentText.startsWith('=')) {
+          session.isActive = true;
+          if (isFormulaAwaitingOperand(currentText)) {
+            session.baseText = currentText;
+            session.hasActiveToken = false;
+            hideRefHighlight();
+          } else if (!session.hasActiveToken) {
+            session.baseText = currentText;
+          }
+        } else {
+          session.isActive = false;
+          session.hasActiveToken = false;
+          hideRefHighlight();
+        }
+      };
+
+      editor?.textEl?.el?.addEventListener('input', handleEditorTextareaInput);
 
       // Wrap selector.set so keyboard arrow navigation into merged cells targets the top-left cell
       const selector = (s as any).sheet?.selector;
@@ -816,6 +979,222 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       window.addEventListener('mousemove', handleWindowMouseMove);
       window.addEventListener('mouseup', handleWindowMouseUp);
 
+      // Formula Reference Point-and-Click Interception
+      const handleFormulaCaptureMouseDown = (e: MouseEvent) => {
+        if (e.button !== 0) return;
+        if (document.querySelector('dialog[open]')) return;
+
+        const sheet = (s as any).sheet;
+        if (!sheet?.data || !sheet?.editor) return;
+
+        const editorEl = container.querySelector('.x-spreadsheet-editor') as HTMLElement | null;
+        const isEditorVisible = editorEl && editorEl.style.display !== 'none';
+
+        // Allow clicking inside editor textarea itself for cursor placement / selection
+        if (editorEl && editorEl.contains(e.target as Node)) {
+          return;
+        }
+
+        // Allow clicking toolbar, bottombar, scrollbars, and resizers
+        const target = e.target as HTMLElement | null;
+        if (target?.closest('.x-spreadsheet-toolbar, .x-spreadsheet-bottombar, .x-spreadsheet-scrollbar, .x-spreadsheet-resizer')) {
+          return;
+        }
+
+        const session = formulaRefSessionRef.current;
+        const currentText = sheet.editor.inputText || '';
+
+        const isEditingFormula = (isEditorVisible && currentText.startsWith('=')) || session.isActive;
+        if (!isEditingFormula) {
+          return;
+        }
+
+        // Check if formula is awaiting an operand or replacing active reference token
+        const awaiting = isFormulaAwaitingOperand(currentText);
+        if (!awaiting && !session.hasActiveToken) {
+          return;
+        }
+
+        const overlayer = container.querySelector('.x-spreadsheet-overlayer') as HTMLElement | null;
+        if (!overlayer) return;
+
+        const rect = overlayer.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+
+        const rowHeight = sheet.data.rows?.height || 26;
+        const indexWidth = sheet.data.cols?.indexWidth || 60;
+
+        // Ignore clicks on header areas
+        if (offsetY <= rowHeight || offsetX <= indexWidth) {
+          return;
+        }
+
+        const cellRect = sheet.data.getCellRectByXY(offsetX, offsetY);
+        const { ri, ci } = cellRect;
+        if (ri < 0 || ci < 0) return;
+
+        // If clicking the cell currently being edited, allow focus without self-referencing
+        if (ri === session.targetR && ci === session.targetC) {
+          return;
+        }
+
+        // Intercept event to prevent editor.clear() and keep target cell active!
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        // Ensure editor is visible on target cell
+        if (!isEditorVisible && sheet.data) {
+          const sOffset = sheet.data.getRect({
+            sri: session.targetR,
+            sci: session.targetC,
+            eri: session.targetR,
+            eci: session.targetC,
+          });
+          const tOffset = sheet.getTableOffset();
+          const sPosition = sOffset.top > tOffset.height / 2 ? 'bottom' : 'top';
+          sheet.editor.setOffset(sOffset, sPosition);
+          const cell = sheet.data.getCell(session.targetR, session.targetC) || sheet.data.getSelectedCell();
+          sheet.editor.setCell(cell, sheet.data.getSelectedValidator());
+        }
+
+        const merge = sheet.data.merges?.getFirstIncludes?.(ri, ci);
+        const sri = merge ? merge.sri : ri;
+        const sci = merge ? merge.sci : ci;
+        const eri = merge ? merge.eri : ri;
+        const eci = merge ? merge.eci : ci;
+
+        // Shift+Click range extension: if user previously selected a reference and now shift-clicks
+        if (e.shiftKey && session.hasActiveToken && session.refRange) {
+          const anchor = session.dragAnchor || { ri: session.refRange.sri, ci: session.refRange.sci };
+          const curSri = Math.min(anchor.ri, sri);
+          const curSci = Math.min(anchor.ci, sci);
+          const curEri = Math.max(anchor.ri, eri);
+          const curEci = Math.max(anchor.ci, eci);
+
+          const rangeCoord = (curSri === curEri && curSci === curEci)
+            ? XLSX.utils.encode_cell({ r: curSri, c: curSci })
+            : `${XLSX.utils.encode_cell({ r: curSri, c: curSci })}:${XLSX.utils.encode_cell({ r: curEri, c: curEci })}`;
+
+          const updatedFormula = session.baseText + rangeCoord;
+          sheet.editor.setText(updatedFormula);
+
+          session.refRange = { sri: curSri, sci: curSci, eri: curEri, eci: curEci };
+          updateRefHighlight(session.refRange);
+
+          const targetCoord = XLSX.utils.encode_cell({ r: session.targetR, c: session.targetC });
+          onActiveCellChangeRef.current(targetCoord, updatedFormula, session.targetR, session.targetC);
+          return;
+        }
+
+        if (!session.hasActiveToken) {
+          session.baseText = currentText;
+        }
+
+        const refCoord = (sri === eri && sci === eci)
+          ? XLSX.utils.encode_cell({ r: sri, c: sci })
+          : `${XLSX.utils.encode_cell({ r: sri, c: sci })}:${XLSX.utils.encode_cell({ r: eri, c: eci })}`;
+
+        const newFormula = session.baseText + refCoord;
+        sheet.editor.setText(newFormula);
+
+        session.hasActiveToken = true;
+        session.refRange = { sri, sci, eri, eci };
+        session.dragAnchor = { ri, ci };
+        session.isDraggingRange = true;
+
+        updateRefHighlight({ sri, sci, eri, eci });
+
+        const targetCoord = XLSX.utils.encode_cell({ r: session.targetR, c: session.targetC });
+        onActiveCellChangeRef.current(targetCoord, newFormula, session.targetR, session.targetC);
+
+        const handleDragMouseMove = (moveEvt: MouseEvent) => {
+          if (!session.isDraggingRange || moveEvt.buttons !== 1) {
+            handleDragMouseUp();
+            return;
+          }
+          const moveOffsetX = moveEvt.clientX - rect.left;
+          const moveOffsetY = moveEvt.clientY - rect.top;
+          const curCellRect = sheet.data.getCellRectByXY(moveOffsetX, moveOffsetY);
+          if (curCellRect.ri < 0 || curCellRect.ci < 0) return;
+
+          const anchor = session.dragAnchor;
+          if (!anchor) return;
+
+          const curSri = Math.min(anchor.ri, curCellRect.ri);
+          const curSci = Math.min(anchor.ci, curCellRect.ci);
+          const curEri = Math.max(anchor.ri, curCellRect.ri);
+          const curEci = Math.max(anchor.ci, curCellRect.ci);
+
+          const rangeCoord = (curSri === curEri && curSci === curEci)
+            ? XLSX.utils.encode_cell({ r: curSri, c: curSci })
+            : `${XLSX.utils.encode_cell({ r: curSri, c: curSci })}:${XLSX.utils.encode_cell({ r: curEri, c: curEci })}`;
+
+          const updatedFormula = session.baseText + rangeCoord;
+          sheet.editor.setText(updatedFormula);
+
+          session.refRange = { sri: curSri, sci: curSci, eri: curEri, eci: curEci };
+          updateRefHighlight(session.refRange);
+
+          onActiveCellChangeRef.current(targetCoord, updatedFormula, session.targetR, session.targetC);
+        };
+
+        const handleDragMouseUp = () => {
+          session.isDraggingRange = false;
+          window.removeEventListener('mousemove', handleDragMouseMove, true);
+          window.removeEventListener('mouseup', handleDragMouseUp, true);
+
+          if (sheet.editor?.textEl?.el) {
+            sheet.editor.textEl.el.focus();
+          }
+        };
+
+        window.addEventListener('mousemove', handleDragMouseMove, true);
+        window.addEventListener('mouseup', handleDragMouseUp, true);
+      };
+
+      const handleFormulaKeyDownCapture = (e: KeyboardEvent) => {
+        if (e.isComposing) return;
+        if (document.querySelector('dialog[open]')) return;
+
+        const sheet = (s as any).sheet;
+        const ed = sheet?.editor;
+        const editorEl = container.querySelector('.x-spreadsheet-editor') as HTMLElement | null;
+        const isEditing = editorEl && editorEl.style.display !== 'none';
+
+        if (!isEditing || !ed) return;
+
+        const currentText = ed.inputText || '';
+        const session = formulaRefSessionRef.current;
+
+        if ((e.key === 'Enter' || e.key === 'Tab') && !e.ctrlKey && !e.altKey && !e.metaKey) {
+          if (currentText.startsWith('=')) {
+            const closed = autoCloseParentheses(currentText);
+            if (closed !== currentText) {
+              ed.setText(closed);
+            }
+            hideRefHighlight();
+            session.isActive = false;
+            session.hasActiveToken = false;
+            session.refRange = null;
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          hideRefHighlight();
+          session.isActive = false;
+          session.hasActiveToken = false;
+          session.refRange = null;
+          ed.setText(session.originalText);
+          ed.clear();
+          sheet.table?.render?.();
+        }
+      };
+
+      container.addEventListener('mousedown', handleFormulaCaptureMouseDown, true);
+      window.addEventListener('keydown', handleFormulaKeyDownCapture, true);
+
       // Instant cell editing when Enter is pressed on a selected cell
       const handleGridKeyDown = (e: KeyboardEvent) => {
         if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || e.isComposing) {
@@ -874,6 +1253,12 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       return () => {
         cancelled = true;
         stopAutoScroll();
+        window.removeEventListener('keydown', handleFormulaKeyDownCapture, true);
+        container.removeEventListener('mousedown', handleFormulaCaptureMouseDown, true);
+        editor?.textEl?.el?.removeEventListener('input', handleEditorTextareaInput);
+        if (refHighlightEl.parentNode) {
+          refHighlightEl.parentNode.removeChild(refHighlightEl);
+        }
         window.removeEventListener('keydown', handleGridKeyDown, true);
         container.removeEventListener('mousedown', handleBorderMouseDown, true);
         window.removeEventListener('mouseup', handleBorderMouseUp, true);
