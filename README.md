@@ -34,3 +34,7 @@ Pushes to `main` deploy automatically to GitHub Pages via `.github/workflows/pag
 ## Privacy
 
 All parsing, editing, and exports happen locally in your browser. The service worker precaches application assets only; spreadsheet content is never cached, tracked, or sent over the network.
+
+## License
+
+MIT
