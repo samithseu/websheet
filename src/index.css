@@ -18,6 +18,12 @@ html, body, #root {
   scrollbar-color: #cbd5e1 transparent;
 }
 
+/* Scrollbar stability: prevent horizontal layout shifts when scrollbars appear */
+.scrollbar-gutter-stable,
+dialog .overflow-y-auto {
+  scrollbar-gutter: stable;
+}
+
 .x-spreadsheet-scrollbar,
 .x-spreadsheet-scrollbar.horizontal,
 .x-spreadsheet-scrollbar.vertical {

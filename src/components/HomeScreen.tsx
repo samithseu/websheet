@@ -69,13 +69,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   return (
     <div
-      className="min-h-screen w-full bg-slate-50 text-slate-800 flex flex-col font-sans select-none overflow-y-auto"
+      className="h-full w-full flex-1 min-h-0 bg-slate-50 text-slate-800 flex flex-col font-sans select-none overflow-y-auto"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       {/* Top Navbar */}
-      <header className="h-14 px-6 sm:px-10 flex items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-xs sticky top-0 z-20">
+      <header className="shrink-0 h-14 px-6 sm:px-10 flex items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-xs sticky top-0 z-20">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
             <FileSpreadsheet className="w-4.5 h-4.5" />
@@ -283,7 +283,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       </main>
 
       {/* Footer */}
-      <footer className="py-6 text-center text-xs text-slate-500 border-t border-slate-200/80 bg-white">
+      <footer className="shrink-0 py-6 text-center text-xs text-slate-500 border-t border-slate-200/80 bg-white">
         <p>100% Client-Side Private • Spreadsheets never leave your computer • Works Offline</p>
       </footer>
     </div>
