@@ -1,7 +1,7 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import 'x-data-spreadsheet';
 import * as XLSX from 'xlsx';
-import { normalizeSpreadsheetData, type XSpreadsheetData } from '../utils/spreadsheetConverter';
+import { normalizeSpreadsheetData, isFormulaSupportedByGrid, type XSpreadsheetData } from '../utils/spreadsheetConverter';
 import type { SelectionStats } from './FormulaBar';
 import { getSpreadsheetFactory, type XSpreadsheetInstance } from '../types/spreadsheet';
 import { calculateAutofitColumnWidth, calculateAutofitAllColumns } from '../utils/columnAutofit';
@@ -78,16 +78,20 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
     useImperativeHandle(ref, () => ({
       loadData: (data: XSpreadsheetData) => {
         if (spreadsheetInstanceRef.current) {
-          const normalized = normalizeSpreadsheetData(data);
-          spreadsheetInstanceRef.current.loadData(normalized);
-          selectedRangeRef.current = null;
-          const sheetInstance = (spreadsheetInstanceRef.current as any).sheet;
-          if (sheetInstance?.print) {
-            sheetInstance.print.preview = () => {
-              onPrintRequestRef.current?.();
-            };
+          try {
+            const normalized = normalizeSpreadsheetData(data);
+            spreadsheetInstanceRef.current.loadData(normalized);
+            selectedRangeRef.current = null;
+            const sheetInstance = (spreadsheetInstanceRef.current as any).sheet;
+            if (sheetInstance?.print) {
+              sheetInstance.print.preview = () => {
+                onPrintRequestRef.current?.();
+              };
+            }
+            onDataChangeRef.current(spreadsheetInstanceRef.current.getData());
+          } catch (err) {
+            console.error('Failed to load data into spreadsheet grid:', err);
           }
-          onDataChangeRef.current(spreadsheetInstanceRef.current.getData());
         }
       },
       getData: () => {
@@ -98,9 +102,24 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       },
       setCellText: (rowIndex: number, colIndex: number, text: string) => {
         if (spreadsheetInstanceRef.current) {
-          spreadsheetInstanceRef.current.cellText(rowIndex, colIndex, text);
-          spreadsheetInstanceRef.current.reRender();
-          onDataChangeRef.current(spreadsheetInstanceRef.current.getData());
+          const s = spreadsheetInstanceRef.current;
+          const cell = s.cell(rowIndex, colIndex);
+          if (cell) {
+            if (!text.startsWith('=')) {
+              delete (cell as any).formula;
+            } else if (!isFormulaSupportedByGrid(text)) {
+              (cell as any).formula = text.slice(1);
+            } else {
+              delete (cell as any).formula;
+            }
+          }
+          s.cellText(rowIndex, colIndex, text);
+          try {
+            s.reRender();
+          } catch (err) {
+            console.warn('Error during reRender after setCellText:', err);
+          }
+          onDataChangeRef.current(s.getData());
         }
       },
       undo: () => {
@@ -234,12 +253,28 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         };
       }
 
+      // Defensive try-catch around canvas table render
+      const sheetInstance = (s as any).sheet;
+      if (sheetInstance?.table && typeof sheetInstance.table.render === 'function') {
+        const origTableRender = sheetInstance.table.render.bind(sheetInstance.table);
+        sheetInstance.table.render = function () {
+          try {
+            origTableRender();
+          } catch (err) {
+            console.warn('Spreadsheet canvas table render error caught safely:', err);
+          }
+        };
+      }
+
       // Load initial data on mount only (normalized for merges)
-      const normalizedInitial = normalizeSpreadsheetData(initialDataRef.current);
-      s.loadData(normalizedInitial);
+      try {
+        const normalizedInitial = normalizeSpreadsheetData(initialDataRef.current);
+        s.loadData(normalizedInitial);
+      } catch (err) {
+        console.error('Failed to load initial data in spreadsheet grid:', err);
+      }
 
       // Intercept toolbar printer action to trigger unified PrintDialog
-      const sheetInstance = (s as any).sheet;
       if (sheetInstance?.print) {
         sheetInstance.print.preview = () => {
           onPrintRequestRef.current?.();
@@ -436,7 +471,9 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         // Update active cell text if changed
         const { r, c } = activeCellPosRef.current;
         const currentSheetData = s.cell(r, c);
-        const text = currentSheetData?.text !== undefined ? String(currentSheetData.text) : '';
+        const cellFormula = (currentSheetData as any)?.formula;
+        const cellRawText = currentSheetData?.text !== undefined ? String(currentSheetData.text) : '';
+        const text = cellFormula && !cellRawText.startsWith('=') ? `=${cellFormula}` : cellRawText;
         const coord = XLSX.utils.encode_cell({ r, c });
         onActiveCellChangeRef.current(coord, text, r, c);
       });
@@ -457,7 +494,9 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         const coord = merge
           ? `${XLSX.utils.encode_cell({ r: merge.sri, c: merge.sci })}:${XLSX.utils.encode_cell({ r: merge.eri, c: merge.eci })}`
           : XLSX.utils.encode_cell({ r: targetR, c: targetC });
-        const text = targetCell?.text !== undefined ? String(targetCell.text) : '';
+        const targetFormula = (targetCell as any)?.formula;
+        const targetRawText = targetCell?.text !== undefined ? String(targetCell.text) : '';
+        const text = targetFormula && !targetRawText.startsWith('=') ? `=${targetFormula}` : targetRawText;
         onActiveCellChangeRef.current(coord, text, targetR, targetC);
         onSelectionStatsChangeRef.current(null);
       });
@@ -476,7 +515,9 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         const rangeCoord = startCoord === endCoord ? startCoord : `${startCoord}:${endCoord}`;
 
         const activeCell = s.cell(sri, sci);
-        const text = activeCell?.text !== undefined ? String(activeCell.text) : '';
+        const activeFormula = (activeCell as any)?.formula;
+        const activeRawText = activeCell?.text !== undefined ? String(activeCell.text) : '';
+        const text = activeFormula && !activeRawText.startsWith('=') ? `=${activeFormula}` : activeRawText;
         onActiveCellChangeRef.current(rangeCoord, text, sri, sci);
 
         // Calculate selection stats
@@ -518,6 +559,16 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
 
       // Bind cell edited
       s.on('cell-edited', (text: string, ri: number, ci: number) => {
+        const cell = s.cell(ri, ci);
+        if (cell) {
+          if (!text.startsWith('=')) {
+            delete (cell as any).formula;
+          } else if (!isFormulaSupportedByGrid(text)) {
+            (cell as any).formula = text.slice(1);
+          } else {
+            delete (cell as any).formula;
+          }
+        }
         activeCellPosRef.current = { r: ri, c: ci };
         const coord = XLSX.utils.encode_cell({ r: ri, c: ci });
         onActiveCellChangeRef.current(coord, text, ri, ci);

@@ -89,7 +89,11 @@ export function replaceSingleOccurrence(
 
   const cellStr = String(cell.text);
   const regex = new RegExp(escapeRegExp(query), matchCase ? '' : 'i');
-  cell.text = cellStr.replace(regex, replaceText);
+  const newText = cellStr.replace(regex, replaceText);
+  cell.text = newText;
+  if (!newText.startsWith('=')) {
+    delete cell.formula;
+  }
 
   return cloned;
 }
@@ -129,7 +133,11 @@ export function replaceAllOccurrences(
 
         if (matches && matches.length > 0) {
           const replaceRegex = new RegExp(pattern, matchCase ? 'g' : 'gi');
-          cell.text = cellStr.replace(replaceRegex, replaceText);
+          const newText = cellStr.replace(replaceRegex, replaceText);
+          cell.text = newText;
+          if (!newText.startsWith('=')) {
+            delete cell.formula;
+          }
           count += matches.length;
         }
       });

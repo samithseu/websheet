@@ -54,16 +54,66 @@ const GRID_SUPPORTED_FORMULAS = new Set([
 ]);
 
 /**
- * Checks whether all functions in a formula string are supported by the x-data-spreadsheet engine.
+ * Checks whether all functions and syntax in a formula string are fully and safely
+ * supported by the x-data-spreadsheet engine.
+ *
+ * Formulas that contain nested function calls, absolute coordinate signs ($),
+ * sheet references (!), unsupported functions (e.g. RANK, COUNTIFS), or non-standard syntax
+ * are safely rendered using cached precalculated values to prevent canvas tokenizer crashes.
  */
 export function isFormulaSupportedByGrid(formula: string): boolean {
-  if (!formula) return true;
-  const matches = formula.matchAll(/([A-Z0-9_.]+)\s*\(/gi);
-  for (const m of matches) {
-    if (!GRID_SUPPORTED_FORMULAS.has(m[1].toUpperCase())) {
+  if (!formula || typeof formula !== 'string') return true;
+
+  let expr = formula.trim();
+  if (expr.startsWith('=')) {
+    expr = expr.slice(1).trim();
+  }
+  if (!expr) return true;
+
+  // 1. Cannot contain '$' (absolute coordinates cause token splitting and NaN/crashes in x-data-spreadsheet)
+  if (expr.includes('$')) return false;
+
+  // 2. Cannot contain '!' (cross-sheet references not supported by x-data-spreadsheet engine)
+  if (expr.includes('!')) return false;
+
+  // 3. Cannot contain array formula brackets
+  if (expr.startsWith('{') || expr.endsWith('}')) return false;
+
+  // 4. Match all function calls
+  const fnMatches = Array.from(expr.matchAll(/([A-Za-z0-9_.]+)\s*\(/g));
+
+  // If there are multiple function calls or nested calls,
+  // x-data-spreadsheet's unstacked tokenizer state causes stack corruption and undefined tokens
+  if (fnMatches.length > 1) {
+    return false;
+  }
+
+  // If there is exactly 1 function call:
+  if (fnMatches.length === 1) {
+    const fnName = fnMatches[0][1].toUpperCase();
+    if (!GRID_SUPPORTED_FORMULAS.has(fnName)) {
+      return false;
+    }
+    const openIdx = expr.indexOf('(');
+    const closeIdx = expr.lastIndexOf(')');
+    if (openIdx === -1 || closeIdx === -1 || closeIdx <= openIdx) return false;
+    const parenContent = expr.substring(openIdx + 1, closeIdx);
+    // Disallow nested parens inside function arguments
+    if (parenContent.includes('(') || parenContent.includes(')')) {
       return false;
     }
   }
+
+  // If there are NO function calls (e.g. arithmetic expressions like A1+B1, A1*10):
+  if (fnMatches.length === 0) {
+    // Cannot contain ranges (colon)
+    if (expr.includes(':')) return false;
+    // Check characters: only allow standard coordinates, numbers, math operators (+, -, *, /), parens, dots, spaces
+    if (!/^[A-Za-z0-9_.\s+\-*/()]+$/.test(expr)) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -174,10 +224,49 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
       return;
     }
 
-    const range = XLSX.utils.decode_range(ws['!ref']);
+    // Safely decode range or default
+    let range: XLSX.Range;
+    try {
+      range = XLSX.utils.decode_range(ws['!ref']);
+    } catch {
+      range = { s: { r: 0, c: 0 }, e: { r: 0, c: 0 } };
+    }
+
+    // Determine actual cell bounds by scanning cell keys to protect against bloated !ref (e.g. A1:XFD1048576)
+    let actualMinR = range.s.r;
+    let actualMaxR = range.s.r;
+    let actualMinC = range.s.c;
+    let actualMaxC = range.s.c;
+    let hasAnyCell = false;
+
+    const cellKeys = Object.keys(ws);
+    for (const key of cellKeys) {
+      if (key.charCodeAt(0) === 33) continue; // skip '!' keys like !ref, !cols, !merges
+      try {
+        const decoded = XLSX.utils.decode_cell(key);
+        if (!hasAnyCell) {
+          actualMinR = actualMaxR = decoded.r;
+          actualMinC = actualMaxC = decoded.c;
+          hasAnyCell = true;
+        } else {
+          if (decoded.r < actualMinR) actualMinR = decoded.r;
+          if (decoded.r > actualMaxR) actualMaxR = decoded.r;
+          if (decoded.c < actualMinC) actualMinC = decoded.c;
+          if (decoded.c > actualMaxC) actualMaxC = decoded.c;
+        }
+      } catch {
+        // ignore invalid keys
+      }
+    }
+
+    // Bound the iteration range to actual used cells
+    const effectiveMinR = hasAnyCell ? Math.max(0, actualMinR) : 0;
+    const effectiveMaxR = hasAnyCell ? actualMaxR : 0;
+    const effectiveMinC = hasAnyCell ? Math.max(0, actualMinC) : 0;
+    const effectiveMaxC = hasAnyCell ? actualMaxC : 0;
 
     // Handle column widths (prune beyond used range to avoid Excel 16,384 column bloat)
-    const maxColIdx = Math.max(range.e.c + 20, 100);
+    const maxColIdx = Math.max(effectiveMaxC + 20, 100);
     if (ws['!cols'] && Array.isArray(ws['!cols'])) {
       ws['!cols'].forEach((col, cIdx) => {
         if (!col || cIdx > maxColIdx) return;
@@ -190,9 +279,10 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
     }
 
     // Handle row heights
+    const maxRowIdx = Math.max(effectiveMaxR + 20, 100);
     if (ws['!rows'] && Array.isArray(ws['!rows'])) {
       ws['!rows'].forEach((row, rIdx) => {
-        if (!row) return;
+        if (!row || rIdx > maxRowIdx) return;
         const height = row.hpx || (row.hpt ? Math.round(row.hpt * 1.33) : undefined);
         if (height) {
           if (!sheet.rows[rIdx]) {
@@ -213,11 +303,11 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
     }
 
     // Map cells
-    for (let r = range.s.r; r <= range.e.r; ++r) {
+    for (let r = effectiveMinR; r <= effectiveMaxR; ++r) {
       let rowHasCells = false;
       const rowCells: { [colIndex: number]: XSpreadsheetCell } = {};
 
-      for (let c = range.s.c; c <= range.e.c; ++c) {
+      for (let c = effectiveMinC; c <= effectiveMaxC; ++c) {
         const cellCoord = XLSX.utils.encode_cell({ r, c });
         const cell = ws[cellCoord];
 
@@ -231,7 +321,7 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
             if (isFormulaSupportedByGrid(cell.f)) {
               cellText = '=' + cell.f;
             } else {
-              // Formula unsupported by x-data-spreadsheet engine (e.g. RANK, COUNTIFS)
+              // Formula unsupported or complex for x-data-spreadsheet engine
               // Render cached calculated value to prevent canvas rendering crashes
               cellFormula = cell.f;
               if (cell.w !== undefined) {
@@ -265,9 +355,9 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
     }
 
     // Set row length to at least the max row
-    sheet.rows.len = Math.max(100, range.e.r + 20);
+    sheet.rows.len = Math.max(100, effectiveMaxR + 20);
     if (sheet.cols) {
-      sheet.cols.len = Math.max(26, range.e.c + 10);
+      sheet.cols.len = Math.max(26, effectiveMaxC + 10);
     }
 
     out.push(sheet);
@@ -334,7 +424,7 @@ export function xSpreadsheetToWorkbook(sdata: XSpreadsheetData): XLSX.WorkBook {
         const hasDirectFormula = textStr.startsWith('=');
         const formulaToExport = hasDirectFormula
           ? textStr.slice(1)
-          : (cell.formula && (!textStr || textStr === String(cell.value) || !isNaN(Number(textStr))) ? cell.formula : undefined);
+          : (cell.formula || undefined);
 
         // Formula export
         if (formulaToExport) {
