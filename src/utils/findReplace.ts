@@ -1,5 +1,5 @@
-import * as XLSX from 'xlsx';
-import type { XSpreadsheetData } from './spreadsheetConverter';
+import * as XLSX from "xlsx";
+import type { XSpreadsheetData } from "./spreadsheetConverter";
 
 export interface FindMatch {
   sheetIndex: number;
@@ -11,7 +11,7 @@ export interface FindMatch {
 }
 
 function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**
@@ -21,7 +21,7 @@ function escapeRegExp(str: string): string {
 export function searchWorkbook(
   data: XSpreadsheetData,
   query: string,
-  matchCase: boolean
+  matchCase: boolean,
 ): FindMatch[] {
   if (!query.trim() || !data) return [];
 
@@ -75,7 +75,7 @@ export function replaceSingleOccurrence(
   match: FindMatch,
   query: string,
   replaceText: string,
-  matchCase: boolean
+  matchCase: boolean,
 ): XSpreadsheetData {
   const cloned: XSpreadsheetData = JSON.parse(JSON.stringify(data));
   const sheet = cloned[match.sheetIndex];
@@ -88,10 +88,10 @@ export function replaceSingleOccurrence(
   if (!cell || cell.text === undefined || cell.text === null) return cloned;
 
   const cellStr = String(cell.text);
-  const regex = new RegExp(escapeRegExp(query), matchCase ? '' : 'i');
+  const regex = new RegExp(escapeRegExp(query), matchCase ? "" : "i");
   const newText = cellStr.replace(regex, replaceText);
   cell.text = newText;
-  if (!newText.startsWith('=')) {
+  if (!newText.startsWith("=")) {
     delete cell.formula;
   }
 
@@ -105,7 +105,7 @@ export function replaceAllOccurrences(
   data: XSpreadsheetData,
   query: string,
   replaceText: string,
-  matchCase: boolean
+  matchCase: boolean,
 ): { data: XSpreadsheetData; count: number } {
   if (!query.trim() || !data) return { data, count: 0 };
 
@@ -128,14 +128,14 @@ export function replaceAllOccurrences(
         if (!cell || cell.text === undefined || cell.text === null) return;
 
         const cellStr = String(cell.text);
-        const matchRegex = new RegExp(pattern, matchCase ? 'g' : 'gi');
+        const matchRegex = new RegExp(pattern, matchCase ? "g" : "gi");
         const matches = cellStr.match(matchRegex);
 
         if (matches && matches.length > 0) {
-          const replaceRegex = new RegExp(pattern, matchCase ? 'g' : 'gi');
+          const replaceRegex = new RegExp(pattern, matchCase ? "g" : "gi");
           const newText = cellStr.replace(replaceRegex, replaceText);
           cell.text = newText;
-          if (!newText.startsWith('=')) {
+          if (!newText.startsWith("=")) {
             delete cell.formula;
           }
           count += matches.length;

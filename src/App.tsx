@@ -1,27 +1,37 @@
-import { useState, useRef, useEffect, useCallback, lazy, Suspense } from 'react';
-import { Header } from './components/Header';
-import { HomeScreen } from './components/HomeScreen';
-import { FormulaBar, type SelectionStats } from './components/FormulaBar';
-import { SpreadsheetGrid, type SpreadsheetGridRef } from './components/SpreadsheetGrid';
-import { DragDropOverlay } from './components/DragDropOverlay';
+import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
+import { Header } from "./components/Header";
+import { HomeScreen } from "./components/HomeScreen";
+import { FormulaBar, type SelectionStats } from "./components/FormulaBar";
+import { SpreadsheetGrid, type SpreadsheetGridRef } from "./components/SpreadsheetGrid";
+import { DragDropOverlay } from "./components/DragDropOverlay";
 
 const FindReplaceDialog = lazy(() =>
-  import('./components/FindReplaceDialog').then((m) => ({ default: m.FindReplaceDialog }))
+  import("./components/FindReplaceDialog").then((m) => ({
+    default: m.FindReplaceDialog,
+  })),
 );
 const FormulaGuideDialog = lazy(() =>
-  import('./components/FormulaGuideDialog').then((m) => ({ default: m.FormulaGuideDialog }))
+  import("./components/FormulaGuideDialog").then((m) => ({
+    default: m.FormulaGuideDialog,
+  })),
 );
 const PrivacyDialog = lazy(() =>
-  import('./components/PrivacyDialog').then((m) => ({ default: m.PrivacyDialog }))
+  import("./components/PrivacyDialog").then((m) => ({
+    default: m.PrivacyDialog,
+  })),
 );
 const ShortcutsDialog = lazy(() =>
-  import('./components/ShortcutsDialog').then((m) => ({ default: m.ShortcutsDialog }))
+  import("./components/ShortcutsDialog").then((m) => ({
+    default: m.ShortcutsDialog,
+  })),
 );
 const ConfirmDialog = lazy(() =>
-  import('./components/ConfirmDialog').then((m) => ({ default: m.ConfirmDialog }))
+  import("./components/ConfirmDialog").then((m) => ({
+    default: m.ConfirmDialog,
+  })),
 );
 const PrintDialog = lazy(() =>
-  import('./components/PrintDialog').then((m) => ({ default: m.PrintDialog }))
+  import("./components/PrintDialog").then((m) => ({ default: m.PrintDialog })),
 );
 import {
   readSpreadsheetFile,
@@ -34,18 +44,18 @@ import {
   triggerBlobDownload,
   createEmptySheet,
   type XSpreadsheetData,
-} from './utils/spreadsheetConverter';
-import { SAMPLE_TEMPLATES } from './utils/sampleData';
+} from "./utils/spreadsheetConverter";
+import { SAMPLE_TEMPLATES } from "./utils/sampleData";
 
 export function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'editor'>('home');
+  const [currentView, setCurrentView] = useState<"home" | "editor">("home");
   const [hasActiveSession, setHasActiveSession] = useState(false);
-  const [filename, setFilename] = useState('Untitled_Spreadsheet.xlsx');
+  const [filename, setFilename] = useState("Untitled_Spreadsheet.xlsx");
   const [spreadsheetData, setSpreadsheetData] = useState<XSpreadsheetData>(() => [
-    createEmptySheet('Sheet1'),
+    createEmptySheet("Sheet1"),
   ]);
-  const [activeCellCoord, setActiveCellCoord] = useState('A1');
-  const [activeCellText, setActiveCellText] = useState('');
+  const [activeCellCoord, setActiveCellCoord] = useState("A1");
+  const [activeCellText, setActiveCellText] = useState("");
   const [activeCellRow, setActiveCellRow] = useState(0);
   const [activeCellCol, setActiveCellCol] = useState(0);
   const [selectionStats, setSelectionStats] = useState<SelectionStats | null>(null);
@@ -107,9 +117,9 @@ export function App() {
       setDeferredInstallPrompt(e);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     };
   }, []);
 
@@ -117,7 +127,7 @@ export function App() {
     if (!deferredInstallPrompt) return;
     deferredInstallPrompt.prompt();
     const { outcome } = await deferredInstallPrompt.userChoice;
-    if (outcome === 'accepted') {
+    if (outcome === "accepted") {
       setDeferredInstallPrompt(null);
     }
   }, [deferredInstallPrompt]);
@@ -131,31 +141,31 @@ export function App() {
         setSpreadsheetData(data);
         setFilename(file.name);
         setHasActiveSession(true);
-        setCurrentView('editor');
+        setCurrentView("editor");
         gridRef.current?.loadData(data);
         showToast(`Successfully opened "${file.name}" locally`);
       } catch (err: any) {
-        console.error('Failed to read spreadsheet file:', err);
-        showToast(`Failed to parse file: ${err?.message || 'Invalid spreadsheet file'}`);
+        console.error("Failed to read spreadsheet file:", err);
+        showToast(`Failed to parse file: ${err?.message || "Invalid spreadsheet file"}`);
       }
     },
-    [showToast]
+    [showToast],
   );
 
   // Open file with showOpenFilePicker if supported, fallback to <input type="file">
   const handleOpenFileClick = useCallback(async () => {
-    if ('showOpenFilePicker' in window) {
+    if ("showOpenFilePicker" in window) {
       try {
         const [handle] = await (window as any).showOpenFilePicker({
           types: [
             {
-              description: 'Spreadsheet files',
+              description: "Spreadsheet files",
               accept: {
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-                'application/vnd.ms-excel': ['.xls'],
-                'text/csv': ['.csv'],
-                'text/tab-separated-values': ['.tsv'],
-                'application/vnd.oasis.opendocument.spreadsheet': ['.ods'],
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+                "application/vnd.ms-excel": [".xls"],
+                "text/csv": [".csv"],
+                "text/tab-separated-values": [".tsv"],
+                "application/vnd.oasis.opendocument.spreadsheet": [".ods"],
               },
             },
           ],
@@ -164,58 +174,58 @@ export function App() {
         await handleFileUpload(file);
         return;
       } catch (err: any) {
-        if (err.name === 'AbortError') return;
+        if (err.name === "AbortError") return;
       }
     }
 
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
       fileInputRef.current.click();
     }
   }, [handleFileUpload]);
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      handleFileUpload(files[0]);
+      await handleFileUpload(files[0]);
     }
   };
 
   // Unified Exporter reading live grid instance and active sheet
   const handleExport = useCallback(
-    async (format: 'xlsx' | 'csv' | 'json' | 'html') => {
+    async (format: "xlsx" | "csv" | "json" | "html") => {
       try {
         const currentData = gridRef.current?.getData() || spreadsheetData;
-        const activeSheetName = gridRef.current?.getActiveSheetName() || 'Sheet1';
+        const activeSheetName = gridRef.current?.getActiveSheetName() || "Sheet1";
         const wb = xSpreadsheetToWorkbook(currentData);
 
         let blob: Blob;
         let ext: string;
         let mimeType: string;
 
-        if (format === 'xlsx') {
+        if (format === "xlsx") {
           blob = workbookToXlsxBlob(wb);
-          ext = '.xlsx';
-          mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-        } else if (format === 'csv') {
+          ext = ".xlsx";
+          mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        } else if (format === "csv") {
           blob = workbookToCsvBlob(wb, activeSheetName);
-          ext = '.csv';
-          mimeType = 'text/csv';
-        } else if (format === 'json') {
+          ext = ".csv";
+          mimeType = "text/csv";
+        } else if (format === "json") {
           blob = workbookToJsonBlob(wb, activeSheetName);
-          ext = '.json';
-          mimeType = 'application/json';
+          ext = ".json";
+          mimeType = "application/json";
         } else {
           blob = workbookToHtmlBlob(wb, activeSheetName);
-          ext = '.html';
-          mimeType = 'text/html';
+          ext = ".html";
+          mimeType = "text/html";
         }
 
-        const baseName = filename.replace(/\.[^.]+$/, '') || 'Spreadsheet';
+        const baseName = filename.replace(/\.[^.]+$/, "") || "Spreadsheet";
         const targetName = `${baseName}${ext}`;
 
         // Save via native showSaveFilePicker if available
-        if ('showSaveFilePicker' in window) {
+        if ("showSaveFilePicker" in window) {
           try {
             const handle = await (window as any).showSaveFilePicker({
               suggestedName: targetName,
@@ -232,7 +242,7 @@ export function App() {
             showToast(`Saved "${targetName}" to your device`);
             return;
           } catch (pickerErr: any) {
-            if (pickerErr.name === 'AbortError') return;
+            if (pickerErr.name === "AbortError") return;
           }
         }
 
@@ -240,11 +250,11 @@ export function App() {
         triggerBlobDownload(blob, targetName);
         showToast(`Saved "${targetName}" to your device`);
       } catch (err: any) {
-        console.error('Failed to export:', err);
-        showToast(`Export error: ${err?.message || 'Failed to export'}`);
+        console.error("Failed to export:", err);
+        showToast(`Export error: ${err?.message || "Failed to export"}`);
       }
     },
-    [filename, spreadsheetData, showToast]
+    [filename, spreadsheetData, showToast],
   );
 
   const handlePrint = useCallback(() => {
@@ -264,38 +274,39 @@ export function App() {
       const currentData = gridRef.current.getData();
       setSpreadsheetData(currentData);
     }
-    setCurrentView('home');
+    setCurrentView("home");
   }, []);
 
   const handleResumeEditing = useCallback(() => {
-    setCurrentView('editor');
+    setCurrentView("editor");
   }, []);
 
   const handleStartNewSpreadsheet = useCallback(() => {
     if (hasActiveSession) {
       setConfirmConfig({
         isOpen: true,
-        title: 'Create new spreadsheet?',
-        description: 'Any unsaved changes in your current workbook will be lost. Create a new blank sheet?',
-        confirmLabel: 'Create New',
+        title: "Create new spreadsheet?",
+        description:
+          "Any unsaved changes in your current workbook will be lost. Create a new blank sheet?",
+        confirmLabel: "Create New",
         onConfirm: () => {
-          const emptyData = [createEmptySheet('Sheet1')];
+          const emptyData = [createEmptySheet("Sheet1")];
           setSpreadsheetData(emptyData);
-          setFilename('Untitled_Spreadsheet.xlsx');
+          setFilename("Untitled_Spreadsheet.xlsx");
           setHasActiveSession(true);
-          setCurrentView('editor');
+          setCurrentView("editor");
           gridRef.current?.loadData(emptyData);
-          showToast('Created new blank spreadsheet');
+          showToast("Created new blank spreadsheet");
         },
       });
     } else {
-      const emptyData = [createEmptySheet('Sheet1')];
+      const emptyData = [createEmptySheet("Sheet1")];
       setSpreadsheetData(emptyData);
-      setFilename('Untitled_Spreadsheet.xlsx');
+      setFilename("Untitled_Spreadsheet.xlsx");
       setHasActiveSession(true);
-      setCurrentView('editor');
+      setCurrentView("editor");
       gridRef.current?.loadData(emptyData);
-      showToast('Created new blank spreadsheet');
+      showToast("Created new blank spreadsheet");
     }
   }, [hasActiveSession, showToast]);
 
@@ -308,13 +319,13 @@ export function App() {
         setConfirmConfig({
           isOpen: true,
           title: `Load template "${tmpl.name}"?`,
-          description: 'Loading this template will replace your current spreadsheet data.',
-          confirmLabel: 'Load Template',
+          description: "Loading this template will replace your current spreadsheet data.",
+          confirmLabel: "Load Template",
           onConfirm: () => {
             setSpreadsheetData(tmpl.data);
             setFilename(tmpl.filename);
             setHasActiveSession(true);
-            setCurrentView('editor');
+            setCurrentView("editor");
             gridRef.current?.loadData(tmpl.data);
             showToast(`Loaded template: "${tmpl.name}"`);
           },
@@ -323,20 +334,20 @@ export function App() {
         setSpreadsheetData(tmpl.data);
         setFilename(tmpl.filename);
         setHasActiveSession(true);
-        setCurrentView('editor');
+        setCurrentView("editor");
         gridRef.current?.loadData(tmpl.data);
         showToast(`Loaded template: "${tmpl.name}"`);
       }
     },
-    [hasActiveSession, showToast]
+    [hasActiveSession, showToast],
   );
 
   const handleAllSheetsDeleted = useCallback(() => {
     setHasActiveSession(false);
-    setSpreadsheetData([createEmptySheet('Sheet1')]);
-    setFilename('Untitled_Spreadsheet.xlsx');
-    setCurrentView('home');
-    showToast('All sheets deleted. Returned to home screen.');
+    setSpreadsheetData([createEmptySheet("Sheet1")]);
+    setFilename("Untitled_Spreadsheet.xlsx");
+    setCurrentView("home");
+    showToast("All sheets deleted. Returned to home screen.");
   }, [showToast]);
 
   const handleRequestDeleteSheet = useCallback(() => {
@@ -347,16 +358,17 @@ export function App() {
   const handleRequestNewSpreadsheet = useCallback(() => {
     setConfirmConfig({
       isOpen: true,
-      title: 'Create new spreadsheet?',
-      description: 'Any unsaved changes in your current workbook will be lost. Create a new blank sheet?',
-      confirmLabel: 'Create New',
+      title: "Create new spreadsheet?",
+      description:
+        "Any unsaved changes in your current workbook will be lost. Create a new blank sheet?",
+      confirmLabel: "Create New",
       onConfirm: () => {
-        const emptyData = [createEmptySheet('Sheet1')];
+        const emptyData = [createEmptySheet("Sheet1")];
         setSpreadsheetData(emptyData);
-        setFilename('Untitled_Spreadsheet.xlsx');
+        setFilename("Untitled_Spreadsheet.xlsx");
         setHasActiveSession(true);
         gridRef.current?.loadData(emptyData);
-        showToast('Created new blank spreadsheet');
+        showToast("Created new blank spreadsheet");
       },
     });
   }, [showToast]);
@@ -364,12 +376,13 @@ export function App() {
   const handleRequestClearSheet = useCallback(() => {
     setConfirmConfig({
       isOpen: true,
-      title: 'Clear active sheet?',
-      description: 'This will remove all rows, cells, and values from the current sheet. This cannot be undone.',
-      confirmLabel: 'Clear Sheet',
+      title: "Clear active sheet?",
+      description:
+        "This will remove all rows, cells, and values from the current sheet. This cannot be undone.",
+      confirmLabel: "Clear Sheet",
       onConfirm: () => {
         gridRef.current?.clearCurrentSheet();
-        showToast('Cleared active sheet');
+        showToast("Cleared active sheet");
       },
     });
   }, [showToast]);
@@ -382,8 +395,8 @@ export function App() {
       setConfirmConfig({
         isOpen: true,
         title: `Load template "${tmpl.name}"?`,
-        description: 'Loading this template will replace your current spreadsheet data.',
-        confirmLabel: 'Load Template',
+        description: "Loading this template will replace your current spreadsheet data.",
+        confirmLabel: "Load Template",
         onConfirm: () => {
           setSpreadsheetData(tmpl.data);
           setFilename(tmpl.filename);
@@ -393,7 +406,7 @@ export function App() {
         },
       });
     },
-    [showToast]
+    [showToast],
   );
 
   // Edit actions
@@ -411,7 +424,7 @@ export function App() {
       gridRef.current?.setCellText(activeCellRow, activeCellCol, newText);
       setActiveCellText(newText);
     },
-    [activeCellRow, activeCellCol]
+    [activeCellRow, activeCellCol],
   );
 
   const handleFormulaBarTextChange = useCallback((text: string) => {
@@ -426,7 +439,7 @@ export function App() {
       setActiveCellText(formulaTemplate);
       showToast(`Inserted formula into ${activeCellCoord}`);
     },
-    [activeCellRow, activeCellCol, activeCellCoord, showToast]
+    [activeCellRow, activeCellCol, activeCellCoord, showToast],
   );
 
   // Active cell / stats callbacks
@@ -437,7 +450,7 @@ export function App() {
       setActiveCellRow(rowIndex);
       setActiveCellCol(colIndex);
     },
-    []
+    [],
   );
 
   const handleSelectionStatsChange = useCallback((stats: SelectionStats | null) => {
@@ -451,7 +464,7 @@ export function App() {
     const handleDragEnter = (e: DragEvent) => {
       e.preventDefault();
       dragCounter++;
-      if (e.dataTransfer?.types?.includes('Files')) {
+      if (e.dataTransfer?.types?.includes("Files")) {
         setIsDragging(true);
       }
     };
@@ -469,57 +482,57 @@ export function App() {
       e.preventDefault();
     };
 
-    const handleDrop = (e: DragEvent) => {
+    const handleDrop = async (e: DragEvent) => {
       e.preventDefault();
       dragCounter = 0;
       setIsDragging(false);
 
       if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-        handleFileUpload(e.dataTransfer.files[0]);
+        await handleFileUpload(e.dataTransfer.files[0]);
       }
     };
 
-    window.addEventListener('dragenter', handleDragEnter);
-    window.addEventListener('dragleave', handleDragLeave);
-    window.addEventListener('dragover', handleDragOver);
-    window.addEventListener('drop', handleDrop);
+    window.addEventListener("dragenter", handleDragEnter);
+    window.addEventListener("dragleave", handleDragLeave);
+    window.addEventListener("dragover", handleDragOver);
+    window.addEventListener("drop", handleDrop);
 
     return () => {
-      window.removeEventListener('dragenter', handleDragEnter);
-      window.removeEventListener('dragleave', handleDragLeave);
-      window.removeEventListener('dragover', handleDragOver);
-      window.removeEventListener('drop', handleDrop);
+      window.removeEventListener("dragenter", handleDragEnter);
+      window.removeEventListener("dragleave", handleDragLeave);
+      window.removeEventListener("dragover", handleDragOver);
+      window.removeEventListener("drop", handleDrop);
     };
   }, [handleFileUpload]);
 
   // Window-level Keyboard Shortcuts (Universal Ctrl/Cmd)
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
       const isCmdOrCtrl = e.metaKey || e.ctrlKey;
 
-      if (isCmdOrCtrl && e.key.toLowerCase() === 's') {
-        if (currentView === 'editor') {
+      if (isCmdOrCtrl && e.key.toLowerCase() === "s") {
+        if (currentView === "editor") {
           e.preventDefault();
-          handleExport('xlsx');
+          await handleExport("xlsx");
         }
-      } else if (isCmdOrCtrl && e.key.toLowerCase() === 'o') {
+      } else if (isCmdOrCtrl && e.key.toLowerCase() === "o") {
         e.preventDefault();
-        handleOpenFileClick();
-      } else if (isCmdOrCtrl && e.key.toLowerCase() === 'f') {
-        if (currentView === 'editor') {
+        await handleOpenFileClick();
+      } else if (isCmdOrCtrl && e.key.toLowerCase() === "f") {
+        if (currentView === "editor") {
           e.preventDefault();
           setIsFindReplaceOpen(true);
         }
-      } else if (isCmdOrCtrl && e.key.toLowerCase() === 'p') {
-        if (currentView === 'editor') {
+      } else if (isCmdOrCtrl && e.key.toLowerCase() === "p") {
+        if (currentView === "editor") {
           e.preventDefault();
           handlePrint();
         }
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleExport, handleOpenFileClick, handlePrint, currentView]);
 
   return (
@@ -533,7 +546,7 @@ export function App() {
         className="hidden"
       />
 
-      {currentView === 'home' ? (
+      {currentView === "home" ? (
         <HomeScreen
           onNewSpreadsheet={handleStartNewSpreadsheet}
           onOpenFileClick={handleOpenFileClick}
@@ -630,10 +643,7 @@ export function App() {
           onInsertFormula={handleInsertFormula}
         />
 
-        <PrivacyDialog
-          isOpen={isPrivacyModalOpen}
-          onClose={() => setIsPrivacyModalOpen(false)}
-        />
+        <PrivacyDialog isOpen={isPrivacyModalOpen} onClose={() => setIsPrivacyModalOpen(false)} />
 
         <ShortcutsDialog
           isOpen={isShortcutsModalOpen}

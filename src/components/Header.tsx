@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   FileSpreadsheet,
   FolderOpen,
@@ -20,8 +20,8 @@ import {
   Check,
   Edit2,
   ArrowDownToLine,
-} from 'lucide-react';
-import { SAMPLE_TEMPLATES } from '../utils/sampleData';
+} from "lucide-react";
+import { SAMPLE_TEMPLATES } from "../utils/sampleData";
 
 interface HeaderProps {
   filename: string;
@@ -29,7 +29,7 @@ interface HeaderProps {
   onNavigateHome: () => void;
   onRequestNewSpreadsheet: () => void;
   onOpenFileClick: () => void;
-  onExport: (format: 'xlsx' | 'csv' | 'json' | 'html') => void;
+  onExport: (format: "xlsx" | "csv" | "json" | "html") => void;
   onPrint: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -68,7 +68,10 @@ export const Header: React.FC<HeaderProps> = ({
   const [tempName, setTempName] = useState(filename);
   const [localDeferredInstallPrompt, setLocalDeferredInstallPrompt] = useState<any>(null);
 
-  const deferredInstallPrompt = propDeferredInstallPrompt !== undefined ? propDeferredInstallPrompt : localDeferredInstallPrompt;
+  const deferredInstallPrompt =
+    propDeferredInstallPrompt !== undefined
+      ? propDeferredInstallPrompt
+      : localDeferredInstallPrompt;
 
   // Trigger button refs for native Popover positioning
   const fileBtnRef = useRef<HTMLButtonElement>(null);
@@ -84,9 +87,9 @@ export const Header: React.FC<HeaderProps> = ({
       setLocalDeferredInstallPrompt(e);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     };
   }, [propDeferredInstallPrompt]);
 
@@ -98,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
     if (!deferredInstallPrompt) return;
     deferredInstallPrompt.prompt();
     const { outcome } = await deferredInstallPrompt.userChoice;
-    if (outcome === 'accepted') {
+    if (outcome === "accepted") {
       setLocalDeferredInstallPrompt(null);
     }
   };
@@ -106,9 +109,9 @@ export const Header: React.FC<HeaderProps> = ({
   const handleNameSubmit = () => {
     setIsEditingName(false);
     let trimmed = tempName.trim();
-    if (!trimmed) trimmed = 'Spreadsheet';
-    if (!trimmed.endsWith('.xlsx') && !trimmed.endsWith('.csv') && !trimmed.endsWith('.ods')) {
-      trimmed += '.xlsx';
+    if (!trimmed) trimmed = "Spreadsheet";
+    if (!trimmed.endsWith(".xlsx") && !trimmed.endsWith(".csv") && !trimmed.endsWith(".ods")) {
+      trimmed += ".xlsx";
     }
     onFilenameChange(trimmed);
   };
@@ -124,8 +127,8 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const closePopover = (e: React.MouseEvent) => {
-    const popoverEl = (e.currentTarget.closest('[popover]') as HTMLElement);
-    if (popoverEl && typeof (popoverEl as any).hidePopover === 'function') {
+    const popoverEl = e.currentTarget.closest("[popover]") as HTMLElement;
+    if (popoverEl && typeof (popoverEl as any).hidePopover === "function") {
       (popoverEl as any).hidePopover();
     }
   };
@@ -162,8 +165,8 @@ export const Header: React.FC<HeaderProps> = ({
                   onChange={(e) => setTempName(e.target.value)}
                   onBlur={handleNameSubmit}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleNameSubmit();
-                    if (e.key === 'Escape') {
+                    if (e.key === "Enter") handleNameSubmit();
+                    if (e.key === "Escape") {
                       setTempName(filename);
                       setIsEditingName(false);
                     }
@@ -236,7 +239,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="inline-flex rounded-lg shadow-2xs">
             <button
               type="button"
-              onClick={() => onExport('xlsx')}
+              onClick={() => onExport("xlsx")}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-l-lg transition-colors border-r border-blue-700/40 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
@@ -326,7 +329,7 @@ export const Header: React.FC<HeaderProps> = ({
         id="menu-file"
         popover="auto"
         onToggle={(e: any) => {
-          if (e.newState === 'open') {
+          if (e.newState === "open") {
             positionPopover(e.currentTarget, fileBtnRef.current);
           }
         }}
@@ -374,7 +377,7 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           onClick={(e) => {
             closePopover(e);
-            onExport('xlsx');
+            onExport("xlsx");
           }}
           className="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 hover:text-blue-600 flex items-center justify-between cursor-pointer"
         >
@@ -388,7 +391,7 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           onClick={(e) => {
             closePopover(e);
-            onExport('csv');
+            onExport("csv");
           }}
           className="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2 cursor-pointer"
         >
@@ -399,7 +402,7 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           onClick={(e) => {
             closePopover(e);
-            onExport('json');
+            onExport("json");
           }}
           className="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2 cursor-pointer"
         >
@@ -410,7 +413,7 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           onClick={(e) => {
             closePopover(e);
-            onExport('html');
+            onExport("html");
           }}
           className="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2 cursor-pointer"
         >
@@ -439,7 +442,7 @@ export const Header: React.FC<HeaderProps> = ({
         id="menu-edit"
         popover="auto"
         onToggle={(e: any) => {
-          if (e.newState === 'open') {
+          if (e.newState === "open") {
             positionPopover(e.currentTarget, editBtnRef.current);
           }
         }}
@@ -518,7 +521,7 @@ export const Header: React.FC<HeaderProps> = ({
         id="menu-templates"
         popover="auto"
         onToggle={(e: any) => {
-          if (e.newState === 'open') {
+          if (e.newState === "open") {
             positionPopover(e.currentTarget, templatesBtnRef.current);
           }
         }}
@@ -548,7 +551,7 @@ export const Header: React.FC<HeaderProps> = ({
         id="menu-export"
         popover="auto"
         onToggle={(e: any) => {
-          if (e.newState === 'open') {
+          if (e.newState === "open") {
             positionPopover(e.currentTarget, exportBtnRef.current);
           }
         }}
@@ -558,7 +561,7 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           onClick={(e) => {
             closePopover(e);
-            onExport('xlsx');
+            onExport("xlsx");
           }}
           className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2.5 cursor-pointer"
         >
@@ -572,7 +575,7 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           onClick={(e) => {
             closePopover(e);
-            onExport('csv');
+            onExport("csv");
           }}
           className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2.5 cursor-pointer"
         >
@@ -586,7 +589,7 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           onClick={(e) => {
             closePopover(e);
-            onExport('json');
+            onExport("json");
           }}
           className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2.5 cursor-pointer"
         >
@@ -600,7 +603,7 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           onClick={(e) => {
             closePopover(e);
-            onExport('html');
+            onExport("html");
           }}
           className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2.5 cursor-pointer"
         >

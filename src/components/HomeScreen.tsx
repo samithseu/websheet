@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   FileSpreadsheet,
   Plus,
@@ -12,8 +12,8 @@ import {
   GraduationCap,
   DollarSign,
   Upload,
-} from 'lucide-react';
-import { SAMPLE_TEMPLATES } from '../utils/sampleData';
+} from "lucide-react";
+import { SAMPLE_TEMPLATES } from "../utils/sampleData";
 
 export interface HomeScreenProps {
   onNewSpreadsheet: () => void;
@@ -47,7 +47,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.dataTransfer?.types?.includes('Files')) {
+    if (e.dataTransfer?.types?.includes("Files")) {
       setIsDropZoneActive(true);
     }
   };
@@ -132,8 +132,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             Spreadsheets, simplified and private
           </h1>
           <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-            Create, view, and edit Excel and CSV files directly in your browser.
-            Instant start, zero server uploads, 100% offline.
+            Create, view, and edit Excel and CSV files directly in your browser. Instant start, zero
+            server uploads, 100% offline.
           </p>
         </div>
 
@@ -149,7 +149,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   Open Workbook
                 </p>
                 <p className="text-sm font-bold text-slate-900 truncate max-w-xs sm:max-w-md">
-                  {activeFilename || 'Untitled_Spreadsheet.xlsx'}
+                  {activeFilename || "Untitled_Spreadsheet.xlsx"}
                 </p>
               </div>
             </div>
@@ -196,19 +196,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onClick={onOpenFileClick}
             className={`group relative bg-white border rounded-2xl p-6 sm:p-8 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-6 ${
               isDropZoneActive
-                ? 'border-blue-500 bg-blue-50/50 shadow-md ring-2 ring-blue-500/20'
-                : 'border-slate-200 hover:border-blue-500 hover:shadow-md'
+                ? "border-blue-500 bg-blue-50/50 shadow-md ring-2 ring-blue-500/20"
+                : "border-slate-200 hover:border-blue-500 hover:shadow-md"
             }`}
           >
             <div className="flex items-start justify-between">
               <div
                 className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-2xs transition-colors ${
                   isDropZoneActive
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white'
+                    ? "bg-blue-600 text-white"
+                    : "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white"
                 }`}
               >
-                {isDropZoneActive ? <Upload className="w-6 h-6" /> : <FolderOpen className="w-6 h-6" />}
+                {isDropZoneActive ? (
+                  <Upload className="w-6 h-6" />
+                ) : (
+                  <FolderOpen className="w-6 h-6" />
+                )}
               </div>
               <span className="text-xs font-semibold text-emerald-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
                 Browse or Drop <ArrowRight className="w-3.5 h-3.5" />
@@ -237,17 +241,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {SAMPLE_TEMPLATES.map((tmpl) => {
               let IconComponent = FileSpreadsheet;
-              let iconBg = 'bg-blue-50 text-blue-600';
+              let iconBg = "bg-blue-50 text-blue-600";
 
-              if (tmpl.id === 'monthly-budget') {
+              if (tmpl.id === "monthly-budget") {
                 IconComponent = DollarSign;
-                iconBg = 'bg-indigo-50 text-indigo-600';
-              } else if (tmpl.id === 'sales-tracker') {
+                iconBg = "bg-indigo-50 text-indigo-600";
+              } else if (tmpl.id === "sales-tracker") {
                 IconComponent = TrendingUp;
-                iconBg = 'bg-emerald-50 text-emerald-600';
-              } else if (tmpl.id === 'student-grades') {
+                iconBg = "bg-emerald-50 text-emerald-600";
+              } else if (tmpl.id === "student-grades") {
                 IconComponent = GraduationCap;
-                iconBg = 'bg-amber-50 text-amber-600';
+                iconBg = "bg-amber-50 text-amber-600";
               }
 
               return (
@@ -258,10 +262,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   className="group bg-white border border-slate-200 rounded-xl p-4 text-left hover:border-blue-500 hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between gap-3"
                 >
                   <div className="flex items-center justify-between">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconBg}`}>
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconBg}`}
+                    >
                       <IconComponent className="w-4 h-4" />
                     </div>
-                    {tmpl.id === 'monthly-budget' && (
+                    {tmpl.id === "monthly-budget" && (
                       <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/60">
                         Borders & Formulas
                       </span>

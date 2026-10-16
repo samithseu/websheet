@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages w/ VitePlus
 
 on:
   workflow_dispatch:
@@ -10,24 +10,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: corepack enable
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+      - uses: voidzero-dev/setup-vp@v1.21.2
         with:
-          version: 9
+          node-version: "24"
+          cache: true
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Restore vite task cache
+        id: vite-task-cache
+        uses: actions/cache/restore@v6
         with:
-          node-version: "22"
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
-      - run: pnpm install
-      - run: pnpm build
+      - run: vp run build
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
+
+      - name: Save vite task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
   deploy:
     needs: build

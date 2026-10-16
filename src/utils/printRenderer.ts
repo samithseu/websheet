@@ -1,5 +1,5 @@
-import * as XLSX from 'xlsx';
-import type { XSpreadsheetCell, XSpreadsheetData, XSpreadsheetSheet } from './spreadsheetConverter';
+import * as XLSX from "xlsx";
+import type { XSpreadsheetCell, XSpreadsheetData, XSpreadsheetSheet } from "./spreadsheetConverter";
 
 export interface PrintPaperSize {
   id: string;
@@ -11,16 +11,58 @@ export interface PrintPaperSize {
 }
 
 export const PRINT_PAPER_SIZES: PrintPaperSize[] = [
-  { id: 'letter', name: 'Letter (8.5" × 11")', widthMm: 215.9, heightMm: 279.4, widthPx: 816, heightPx: 1056 },
-  { id: 'a4', name: 'A4 (210 × 297 mm)', widthMm: 210, heightMm: 297, widthPx: 794, heightPx: 1123 },
-  { id: 'legal', name: 'Legal (8.5" × 14")', widthMm: 215.9, heightMm: 355.6, widthPx: 816, heightPx: 1344 },
-  { id: 'a3', name: 'A3 (297 × 420 mm)', widthMm: 297, heightMm: 420, widthPx: 1123, heightPx: 1588 },
-  { id: 'tabloid', name: 'Tabloid (11" × 17")', widthMm: 279.4, heightMm: 431.8, widthPx: 1056, heightPx: 1632 },
-  { id: 'b4', name: 'B4 (250 × 353 mm)', widthMm: 250, heightMm: 353, widthPx: 945, heightPx: 1334 },
-  { id: 'b5', name: 'B5 (176 × 250 mm)', widthMm: 176, heightMm: 250, widthPx: 665, heightPx: 945 },
+  {
+    id: "letter",
+    name: 'Letter (8.5" × 11")',
+    widthMm: 215.9,
+    heightMm: 279.4,
+    widthPx: 816,
+    heightPx: 1056,
+  },
+  {
+    id: "a4",
+    name: "A4 (210 × 297 mm)",
+    widthMm: 210,
+    heightMm: 297,
+    widthPx: 794,
+    heightPx: 1123,
+  },
+  {
+    id: "legal",
+    name: 'Legal (8.5" × 14")',
+    widthMm: 215.9,
+    heightMm: 355.6,
+    widthPx: 816,
+    heightPx: 1344,
+  },
+  {
+    id: "a3",
+    name: "A3 (297 × 420 mm)",
+    widthMm: 297,
+    heightMm: 420,
+    widthPx: 1123,
+    heightPx: 1588,
+  },
+  {
+    id: "tabloid",
+    name: 'Tabloid (11" × 17")',
+    widthMm: 279.4,
+    heightMm: 431.8,
+    widthPx: 1056,
+    heightPx: 1632,
+  },
+  {
+    id: "b4",
+    name: "B4 (250 × 353 mm)",
+    widthMm: 250,
+    heightMm: 353,
+    widthPx: 945,
+    heightPx: 1334,
+  },
+  { id: "b5", name: "B5 (176 × 250 mm)", widthMm: 176, heightMm: 250, widthPx: 665, heightPx: 945 },
 ];
 
-export type PrintOrientation = 'portrait' | 'landscape';
+export type PrintOrientation = "portrait" | "landscape";
 
 export interface PrintMarginOption {
   id: string;
@@ -30,14 +72,14 @@ export interface PrintMarginOption {
 }
 
 export const PRINT_MARGIN_OPTIONS: PrintMarginOption[] = [
-  { id: 'normal', name: 'Normal (0.75" / 1.9 cm)', valueMm: 19.05, valuePx: 72 },
-  { id: 'narrow', name: 'Narrow (0.25" / 0.6 cm)', valueMm: 6.35, valuePx: 24 },
-  { id: 'wide', name: 'Wide (1.0" / 2.5 cm)', valueMm: 25.4, valuePx: 96 },
-  { id: 'custom', name: 'Custom', valueMm: 12.7, valuePx: 48 },
+  { id: "normal", name: 'Normal (0.75" / 1.9 cm)', valueMm: 19.05, valuePx: 72 },
+  { id: "narrow", name: 'Narrow (0.25" / 0.6 cm)', valueMm: 6.35, valuePx: 24 },
+  { id: "wide", name: 'Wide (1.0" / 2.5 cm)', valueMm: 25.4, valuePx: 96 },
+  { id: "custom", name: "Custom", valueMm: 12.7, valuePx: 48 },
 ];
 
-export type PrintScope = 'active-sheet' | 'selection' | 'workbook';
-export type PrintScaleMode = 'fit-width' | 'normal' | 'fit-page';
+export type PrintScope = "active-sheet" | "selection" | "workbook";
+export type PrintScaleMode = "fit-width" | "normal" | "fit-page";
 
 export interface PrintConfig {
   paperSizeId: string;
@@ -90,7 +132,11 @@ export function getSheetContentRange(sheet: XSpreadsheetSheet): CellRange {
       const c = parseInt(cKey, 10);
       if (isNaN(c) || c === undefined) return;
       const cell = row.cells[c];
-      if (cell && (cell.text !== undefined && cell.text !== null && cell.text !== '' || cell.value !== undefined)) {
+      if (
+        cell &&
+        ((cell.text !== undefined && cell.text !== null && cell.text !== "") ||
+          cell.value !== undefined)
+      ) {
         if (!hasCells) {
           minR = r;
           maxR = r;
@@ -133,20 +179,20 @@ export function getSheetContentRange(sheet: XSpreadsheetSheet): CellRange {
 export function getEvaluatedCellText(
   cell: XSpreadsheetCell | undefined,
   sheet: XSpreadsheetSheet,
-  evalCache: Map<string, string> = new Map()
+  evalCache: Map<string, string> = new Map(),
 ): string {
-  if (!cell) return '';
+  if (!cell) return "";
 
   // If value is already resolved and not empty
-  if (cell.value !== undefined && cell.value !== null && cell.value !== '') {
+  if (cell.value !== undefined && cell.value !== null && cell.value !== "") {
     return String(cell.value);
   }
 
-  if (cell.text === undefined || cell.text === null) return '';
+  if (cell.text === undefined || cell.text === null) return "";
   const textStr = String(cell.text).trim();
 
   // If not a formula, return direct text
-  if (!textStr.startsWith('=')) {
+  if (!textStr.startsWith("=")) {
     return textStr;
   }
 
@@ -161,7 +207,7 @@ export function getEvaluatedCellText(
     const targetCell = sheet.rows?.[r]?.cells?.[c];
     if (!targetCell) return 0;
     const txt = getEvaluatedCellText(targetCell, sheet, evalCache);
-    const num = parseFloat(txt.replace(/[$,]/g, ''));
+    const num = parseFloat(txt.replace(/[$,]/g, ""));
     return isNaN(num) ? 0 : num;
   };
 
@@ -173,9 +219,9 @@ export function getEvaluatedCellText(
       const arg = funcMatch[2];
       const values: number[] = [];
 
-      arg.split(',').forEach((part) => {
+      arg.split(",").forEach((part) => {
         const trimmed = part.trim();
-        if (trimmed.includes(':')) {
+        if (trimmed.includes(":")) {
           try {
             const range = XLSX.utils.decode_range(trimmed);
             for (let r = range.s.r; r <= range.e.r; r++) {
@@ -198,15 +244,15 @@ export function getEvaluatedCellText(
       });
 
       let res = 0;
-      if (fnName === 'SUM') {
+      if (fnName === "SUM") {
         res = values.reduce((a, b) => a + b, 0);
-      } else if (fnName === 'AVERAGE') {
+      } else if (fnName === "AVERAGE") {
         res = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
-      } else if (fnName === 'MIN') {
+      } else if (fnName === "MIN") {
         res = values.length ? Math.min(...values) : 0;
-      } else if (fnName === 'MAX') {
+      } else if (fnName === "MAX") {
         res = values.length ? Math.max(...values) : 0;
-      } else if (fnName === 'COUNT') {
+      } else if (fnName === "COUNT") {
         res = values.length;
       }
 
@@ -225,10 +271,10 @@ export function getEvaluatedCellText(
       const v2 = getCellVal(c2.r, c2.c);
 
       let res = 0;
-      if (op === '+') res = v1 + v2;
-      else if (op === '-') res = v1 - v2;
-      else if (op === '*') res = v1 * v2;
-      else if (op === '/' && v2 !== 0) res = v1 / v2;
+      if (op === "+") res = v1 + v2;
+      else if (op === "-") res = v1 - v2;
+      else if (op === "*") res = v1 * v2;
+      else if (op === "/" && v2 !== 0) res = v1 / v2;
 
       const formatted = Number.isInteger(res) ? String(res) : res.toFixed(2);
       evalCache.set(cacheKey, formatted);
@@ -245,39 +291,37 @@ export function getEvaluatedCellText(
 /**
  * Builds HTML table style string for a given cell.
  */
-function buildCellStyleString(
-  style: any,
-  showGridlines: boolean,
-  isHeaderRow: boolean
-): string {
+function buildCellStyleString(style: any, showGridlines: boolean, isHeaderRow: boolean): string {
   const styles: string[] = [
-    'box-sizing: border-box',
-    'overflow: hidden',
-    'white-space: pre-wrap',
-    'word-break: break-word',
-    'padding: 4px 6px',
-    'font-size: 11px',
-    'line-height: 1.25',
+    "box-sizing: border-box",
+    "overflow: hidden",
+    "white-space: pre-wrap",
+    "word-break: break-word",
+    "padding: 4px 6px",
+    "font-size: 11px",
+    "line-height: 1.25",
   ];
 
   // Gridlines / Borders
   if (style?.border) {
     const b = style.border;
-    if (b.top) styles.push(`border-top: ${b.top[0] || '1px'} solid ${b.top[1] || '#cbd5e1'}`);
-    if (b.bottom) styles.push(`border-bottom: ${b.bottom[0] || '1px'} solid ${b.bottom[1] || '#cbd5e1'}`);
-    if (b.left) styles.push(`border-left: ${b.left[0] || '1px'} solid ${b.left[1] || '#cbd5e1'}`);
-    if (b.right) styles.push(`border-right: ${b.right[0] || '1px'} solid ${b.right[1] || '#cbd5e1'}`);
+    if (b.top) styles.push(`border-top: ${b.top[0] || "1px"} solid ${b.top[1] || "#cbd5e1"}`);
+    if (b.bottom)
+      styles.push(`border-bottom: ${b.bottom[0] || "1px"} solid ${b.bottom[1] || "#cbd5e1"}`);
+    if (b.left) styles.push(`border-left: ${b.left[0] || "1px"} solid ${b.left[1] || "#cbd5e1"}`);
+    if (b.right)
+      styles.push(`border-right: ${b.right[0] || "1px"} solid ${b.right[1] || "#cbd5e1"}`);
   } else if (showGridlines) {
-    styles.push('border: 1px solid #e2e8f0');
+    styles.push("border: 1px solid #e2e8f0");
   } else {
-    styles.push('border: 1px solid transparent');
+    styles.push("border: 1px solid transparent");
   }
 
   // Background color
   if (style?.bgcolor) {
     styles.push(`background-color: ${style.bgcolor}`);
   } else if (isHeaderRow) {
-    styles.push('background-color: #f8fafc');
+    styles.push("background-color: #f8fafc");
   }
 
   // Text color
@@ -289,14 +333,14 @@ function buildCellStyleString(
   if (style?.align) {
     styles.push(`text-align: ${style.align}`);
   } else {
-    styles.push('text-align: left');
+    styles.push("text-align: left");
   }
 
   // Vertical alignment
   if (style?.valign) {
     styles.push(`vertical-align: ${style.valign}`);
   } else {
-    styles.push('vertical-align: middle');
+    styles.push("vertical-align: middle");
   }
 
   // Font properties
@@ -304,14 +348,14 @@ function buildCellStyleString(
     const f = style.font;
     if (f.name) styles.push(`font-family: ${f.name}, system-ui, sans-serif`);
     if (f.size) styles.push(`font-size: ${f.size}pt`);
-    if (f.bold) styles.push('font-weight: 700');
-    if (f.italic) styles.push('font-style: italic');
+    if (f.bold) styles.push("font-weight: 700");
+    if (f.italic) styles.push("font-style: italic");
   }
 
-  if (style?.underline) styles.push('text-decoration: underline');
-  if (style?.strike) styles.push('text-decoration: line-through');
+  if (style?.underline) styles.push("text-decoration: underline");
+  if (style?.strike) styles.push("text-decoration: line-through");
 
-  return styles.join('; ');
+  return styles.join("; ");
 }
 
 /**
@@ -321,22 +365,27 @@ export function generatePrintPages(
   data: XSpreadsheetData,
   activeSheetIndex: number,
   selectedRange: CellRange | null,
-  config: PrintConfig
+  config: PrintConfig,
 ): RenderedPrintPage[] {
   const paper = PRINT_PAPER_SIZES.find((p) => p.id === config.paperSizeId) || PRINT_PAPER_SIZES[0];
 
   let marginPx: number;
-  if (config.marginId === 'custom') {
+  if (config.marginId === "custom") {
     const customInches = Math.max(0, Math.min(3, config.customMarginInches ?? 0.5));
     marginPx = Math.round(customInches * 96);
   } else {
-    const marginOpt = PRINT_MARGIN_OPTIONS.find((m) => m.id === config.marginId) || PRINT_MARGIN_OPTIONS[0];
+    const marginOpt =
+      PRINT_MARGIN_OPTIONS.find((m) => m.id === config.marginId) || PRINT_MARGIN_OPTIONS[0];
     marginPx = marginOpt.valuePx;
   }
 
-  const isLandscape = config.orientation === 'landscape';
-  const paperWidthPx = isLandscape ? Math.max(paper.widthPx, paper.heightPx) : Math.min(paper.widthPx, paper.heightPx);
-  const paperHeightPx = isLandscape ? Math.min(paper.widthPx, paper.heightPx) : Math.max(paper.widthPx, paper.heightPx);
+  const isLandscape = config.orientation === "landscape";
+  const paperWidthPx = isLandscape
+    ? Math.max(paper.widthPx, paper.heightPx)
+    : Math.min(paper.widthPx, paper.heightPx);
+  const paperHeightPx = isLandscape
+    ? Math.min(paper.widthPx, paper.heightPx)
+    : Math.max(paper.widthPx, paper.heightPx);
 
   const printableWidthPx = Math.max(100, paperWidthPx - 2 * marginPx);
   const printableHeightPx = Math.max(100, paperHeightPx - 2 * marginPx);
@@ -344,7 +393,7 @@ export function generatePrintPages(
   // Target sheets based on scope
   const targetSheets: Array<{ sheet: XSpreadsheetSheet; range: CellRange }> = [];
 
-  if (config.scope === 'selection' && selectedRange) {
+  if (config.scope === "selection" && selectedRange) {
     const currentSheet = data[activeSheetIndex] || data[0];
     if (currentSheet) {
       targetSheets.push({
@@ -352,7 +401,7 @@ export function generatePrintPages(
         range: selectedRange,
       });
     }
-  } else if (config.scope === 'workbook') {
+  } else if (config.scope === "workbook") {
     data.forEach((sh) => {
       targetSheets.push({
         sheet: sh,
@@ -387,17 +436,20 @@ export function generatePrintPages(
 
     // Determine scale factor
     let scale = 1.0;
-    if (config.scaleMode === 'fit-width') {
+    if (config.scaleMode === "fit-width") {
       if (totalContentWidthPx > 0) {
         scale = printableWidthPx / totalContentWidthPx;
       }
-    } else if (config.scaleMode === 'fit-page') {
+    } else if (config.scaleMode === "fit-page") {
       let totalContentHeightPx = 0;
       for (let r = sri; r <= eri; r++) {
         totalContentHeightPx += sheet.rows?.[r]?.height || DEFAULT_ROW_HEIGHT;
       }
       if (totalContentWidthPx > 0 && totalContentHeightPx > 0) {
-        scale = Math.min(printableWidthPx / totalContentWidthPx, printableHeightPx / totalContentHeightPx);
+        scale = Math.min(
+          printableWidthPx / totalContentWidthPx,
+          printableHeightPx / totalContentHeightPx,
+        );
       }
     }
 
@@ -433,7 +485,11 @@ export function generatePrintPages(
       const rowHeight = (sheet.rows?.[r]?.height || DEFAULT_ROW_HEIGHT) * scale;
 
       // If adding this row exceeds printable height (and chunk is not empty)
-      if (config.scaleMode !== 'fit-page' && currentChunkHeight + rowHeight > printableHeightPx && currentChunk.length > 0) {
+      if (
+        config.scaleMode !== "fit-page" &&
+        currentChunkHeight + rowHeight > printableHeightPx &&
+        currentChunk.length > 0
+      ) {
         pageRowChunks.push(currentChunk);
         currentChunk = [r];
         currentChunkHeight = rowHeight;
@@ -449,11 +505,11 @@ export function generatePrintPages(
 
     // Build HTML for each page chunk
     pageRowChunks.forEach((chunkRows, chunkIdx) => {
-      let tableRowsHtml = '';
+      let tableRowsHtml = "";
 
       chunkRows.forEach((r) => {
         const rowHeight = (sheet.rows?.[r]?.height || DEFAULT_ROW_HEIGHT) * scale;
-        let cellsHtml = '';
+        let cellsHtml = "";
 
         for (let c = sci; c <= eci; c++) {
           const coordKey = `${r},${c}`;
@@ -467,7 +523,7 @@ export function generatePrintPages(
           const text = getEvaluatedCellText(cell, sheet);
           const cellStyleStr = buildCellStyleString(style, config.showGridlines, r === 0);
 
-          let spanAttrs = '';
+          let spanAttrs = "";
           if (mergeSpans.has(coordKey)) {
             const [rn, cn] = mergeSpans.get(coordKey)!;
             // Only span within this page chunk vertically
@@ -482,7 +538,7 @@ export function generatePrintPages(
       });
 
       // Build colgroup
-      let colgroupHtml = '';
+      let colgroupHtml = "";
       colWidths.forEach((w) => {
         colgroupHtml += `<col style="width: ${w * scale}px;" />`;
       });
@@ -527,23 +583,24 @@ export function generatePrintPages(
 /**
  * Triggers native browser printing using a temporary invisible iframe with @page styling.
  */
-export function triggerIframePrint(
-  pages: RenderedPrintPage[],
-  config: PrintConfig
-): void {
+export function triggerIframePrint(pages: RenderedPrintPage[], config: PrintConfig): void {
   const paper = PRINT_PAPER_SIZES.find((p) => p.id === config.paperSizeId) || PRINT_PAPER_SIZES[0];
-  const isLandscape = config.orientation === 'landscape';
+  const isLandscape = config.orientation === "landscape";
 
-  const widthMm = isLandscape ? Math.max(paper.widthMm, paper.heightMm) : Math.min(paper.widthMm, paper.heightMm);
-  const heightMm = isLandscape ? Math.min(paper.widthMm, paper.heightMm) : Math.max(paper.widthMm, paper.heightMm);
+  const widthMm = isLandscape
+    ? Math.max(paper.widthMm, paper.heightMm)
+    : Math.min(paper.widthMm, paper.heightMm);
+  const heightMm = isLandscape
+    ? Math.min(paper.widthMm, paper.heightMm)
+    : Math.max(paper.widthMm, paper.heightMm);
 
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.top = '-9999px';
-  iframe.style.left = '-9999px';
-  iframe.style.width = '0px';
-  iframe.style.height = '0px';
-  iframe.style.border = 'none';
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.top = "-9999px";
+  iframe.style.left = "-9999px";
+  iframe.style.width = "0px";
+  iframe.style.height = "0px";
+  iframe.style.border = "none";
 
   document.body.appendChild(iframe);
 
@@ -556,9 +613,9 @@ export function triggerIframePrint(
     <div class="print-page" style="width: ${widthMm}mm; height: ${heightMm}mm; padding: ${p.paddingPx}px; box-sizing: border-box; page-break-after: always; page-break-inside: avoid; overflow: hidden; background: white;">
       ${p.html}
     </div>
-  `
+  `,
     )
-    .join('');
+    .join("");
 
   doc.open();
   doc.write(`
@@ -607,7 +664,7 @@ export function triggerIframePrint(
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
     } catch (err) {
-      console.error('Print iframe error:', err);
+      console.error("Print iframe error:", err);
     } finally {
       setTimeout(() => {
         if (iframe.parentNode) {
@@ -619,11 +676,11 @@ export function triggerIframePrint(
 }
 
 function escapeHtml(str: string): string {
-  if (!str) return '';
+  if (!str) return "";
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }

@@ -1,4 +1,4 @@
-import type { XSpreadsheetData, XSpreadsheetSheet } from '../utils/spreadsheetConverter';
+import type { XSpreadsheetData, XSpreadsheetSheet } from "../utils/spreadsheetConverter";
 
 export interface XSpreadsheetDataProxy {
   name: string;
@@ -42,9 +42,14 @@ export interface XSpreadsheetInstance {
   };
 }
 
-export function getSpreadsheetFactory(): ((container: HTMLElement, options?: any) => XSpreadsheetInstance) | null {
-  if (typeof window !== 'undefined' && 'x_spreadsheet' in window) {
-    return (window as any).x_spreadsheet as (container: HTMLElement, options?: any) => XSpreadsheetInstance;
+export function getSpreadsheetFactory():
+  | ((container: HTMLElement, options?: any) => XSpreadsheetInstance)
+  | null {
+  if (typeof window !== "undefined" && "x_spreadsheet" in window) {
+    return (window as any).x_spreadsheet as (
+      container: HTMLElement,
+      options?: any,
+    ) => XSpreadsheetInstance;
   }
   return null;
 }

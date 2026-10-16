@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { X, Keyboard, Smartphone } from 'lucide-react';
+import React, { useEffect, useRef } from "react";
+import { X, Keyboard, Smartphone } from "lucide-react";
 
 interface ShortcutsDialogProps {
   isOpen: boolean;
@@ -12,19 +12,19 @@ interface ShortcutItem {
 }
 
 const SHORTCUTS: ShortcutItem[] = [
-  { key: 'Ctrl + S / ⌘ + S', description: 'Quick save spreadsheet as .xlsx' },
-  { key: 'Ctrl + O / ⌘ + O', description: 'Open local spreadsheet file' },
-  { key: 'Ctrl + F / ⌘ + F', description: 'Find & Replace in spreadsheet' },
-  { key: 'Ctrl + Z / ⌘ + Z', description: 'Undo last change' },
-  { key: 'Ctrl + Y / ⌘ + Y', description: 'Redo last change' },
-  { key: 'Ctrl + C / ⌘ + C', description: 'Copy selected cells' },
-  { key: 'Ctrl + X / ⌘ + X', description: 'Cut selected cells' },
-  { key: 'Ctrl + V / ⌘ + V', description: 'Paste cells' },
-  { key: 'Ctrl + P / ⌘ + P', description: 'Print sheet / Export to PDF' },
-  { key: 'Enter', description: 'Edit selected cell / commit edit and move down' },
-  { key: 'Tab', description: 'Commit cell edit and move right' },
-  { key: 'Escape', description: 'Cancel edit or close active modal' },
-  { key: 'Arrow Keys', description: 'Navigate between cells' },
+  { key: "Ctrl + S / ⌘ + S", description: "Quick save spreadsheet as .xlsx" },
+  { key: "Ctrl + O / ⌘ + O", description: "Open local spreadsheet file" },
+  { key: "Ctrl + F / ⌘ + F", description: "Find & Replace in spreadsheet" },
+  { key: "Ctrl + Z / ⌘ + Z", description: "Undo last change" },
+  { key: "Ctrl + Y / ⌘ + Y", description: "Redo last change" },
+  { key: "Ctrl + C / ⌘ + C", description: "Copy selected cells" },
+  { key: "Ctrl + X / ⌘ + X", description: "Cut selected cells" },
+  { key: "Ctrl + V / ⌘ + V", description: "Paste cells" },
+  { key: "Ctrl + P / ⌘ + P", description: "Print sheet / Export to PDF" },
+  { key: "Enter", description: "Edit selected cell / commit edit and move down" },
+  { key: "Tab", description: "Commit cell edit and move right" },
+  { key: "Escape", description: "Cancel edit or close active modal" },
+  { key: "Arrow Keys", description: "Navigate between cells" },
 ];
 
 export const ShortcutsDialog: React.FC<ShortcutsDialogProps> = ({ isOpen, onClose }) => {
@@ -92,8 +92,13 @@ export const ShortcutsDialog: React.FC<ShortcutsDialogProps> = ({ isOpen, onClos
             <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-start gap-2.5">
               <Smartphone className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
               <div className="text-xs text-slate-600 leading-relaxed">
-                <strong className="font-semibold text-slate-800 block">Add to Home Screen (iOS / iPadOS)</strong>
-                Tap the <span className="font-medium text-slate-700">Share</span> button in Safari, then select <span className="font-medium text-slate-700">&ldquo;Add to Home Screen&rdquo;</span> to install WebSheet as a standalone app.
+                <strong className="font-semibold text-slate-800 block">
+                  Add to Home Screen (iOS / iPadOS)
+                </strong>
+                Tap the <span className="font-medium text-slate-700">Share</span> button in Safari,
+                then select{" "}
+                <span className="font-medium text-slate-700">&ldquo;Add to Home Screen&rdquo;</span>{" "}
+                to install WebSheet as a standalone app.
               </div>
             </div>
           </div>

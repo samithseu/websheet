@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   Printer,
   X,
@@ -8,9 +8,9 @@ import {
   ZoomOut,
   Maximize2,
   FileSpreadsheet,
-} from 'lucide-react';
-import * as XLSX from 'xlsx';
-import type { XSpreadsheetData } from '../utils/spreadsheetConverter';
+} from "lucide-react";
+import * as XLSX from "xlsx";
+import type { XSpreadsheetData } from "../utils/spreadsheetConverter";
 import {
   PRINT_PAPER_SIZES,
   PRINT_MARGIN_OPTIONS,
@@ -18,7 +18,7 @@ import {
   type CellRange,
   generatePrintPages,
   triggerIframePrint,
-} from '../utils/printRenderer';
+} from "../utils/printRenderer";
 
 interface PrintDialogProps {
   isOpen: boolean;
@@ -43,14 +43,15 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
   // Print configuration state initialized on mount
   const [config, setConfig] = useState<PrintConfig>(() => {
     const isMultiCellSelection =
-      selectedRange && (selectedRange.sri !== selectedRange.eri || selectedRange.sci !== selectedRange.eci);
+      selectedRange &&
+      (selectedRange.sri !== selectedRange.eri || selectedRange.sci !== selectedRange.eci);
     return {
-      paperSizeId: 'letter',
-      orientation: 'portrait',
-      marginId: 'normal',
+      paperSizeId: "letter",
+      orientation: "portrait",
+      marginId: "normal",
       customMarginInches: 0.5,
-      scope: isMultiCellSelection ? 'selection' : 'active-sheet',
-      scaleMode: 'fit-width',
+      scope: isMultiCellSelection ? "selection" : "active-sheet",
+      scaleMode: "fit-width",
       showGridlines: true,
     };
   });
@@ -59,7 +60,7 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
   const [zoom, setZoom] = useState<number>(0.65);
 
   const activeSheet = data[activeSheetIndex] || data[0];
-  const activeSheetName = activeSheet?.name || 'Sheet1';
+  const activeSheetName = activeSheet?.name || "Sheet1";
 
   // Format selection coordinate range if selected
   const selectionLabel = useMemo(() => {
@@ -134,7 +135,9 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
                   {filename}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500">Configure page setup and export to PDF or printer</p>
+              <p className="text-[11px] text-slate-500">
+                Configure page setup and export to PDF or printer
+              </p>
             </div>
           </div>
 
@@ -240,17 +243,17 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
                     width: `${currentPageData.widthPx * zoom}px`,
                     height: `${currentPageData.heightPx * zoom}px`,
                     padding: `${currentPageData.paddingPx * zoom}px`,
-                    boxSizing: 'border-box',
-                    overflow: 'hidden',
+                    boxSizing: "border-box",
+                    overflow: "hidden",
                   }}
                 >
                   <div
                     style={{
                       transform: `scale(${zoom})`,
-                      transformOrigin: 'top left',
+                      transformOrigin: "top left",
                       width: `${currentPageData.widthPx - 2 * currentPageData.paddingPx}px`,
                       height: `${currentPageData.heightPx - 2 * currentPageData.paddingPx}px`,
-                      overflow: 'hidden',
+                      overflow: "hidden",
                     }}
                     dangerouslySetInnerHTML={{ __html: currentPageData.html }}
                   />
@@ -308,11 +311,11 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => setConfig({ ...config, orientation: 'portrait' })}
+                  onClick={() => setConfig({ ...config, orientation: "portrait" })}
                   className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg border font-medium cursor-pointer transition-all ${
-                    config.orientation === 'portrait'
-                      ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500'
-                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                    config.orientation === "portrait"
+                      ? "border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500"
+                      : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
                   }`}
                 >
                   <div className="w-3.5 h-4.5 border border-current rounded-xs" />
@@ -321,11 +324,11 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
 
                 <button
                   type="button"
-                  onClick={() => setConfig({ ...config, orientation: 'landscape' })}
+                  onClick={() => setConfig({ ...config, orientation: "landscape" })}
                   className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg border font-medium cursor-pointer transition-all ${
-                    config.orientation === 'landscape'
-                      ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500'
-                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                    config.orientation === "landscape"
+                      ? "border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500"
+                      : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
                   }`}
                 >
                   <div className="w-4.5 h-3.5 border border-current rounded-xs" />
@@ -347,9 +350,11 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
                 <option value="fit-page">Fit to page</option>
               </select>
               <p className="text-[11px] text-slate-400">
-                {config.scaleMode === 'fit-width' && 'Resizes sheet width to fit page, flows rows vertically.'}
-                {config.scaleMode === 'normal' && 'Prints cells at their 100% standard dimensions.'}
-                {config.scaleMode === 'fit-page' && 'Scales both width and height to fit on a single page.'}
+                {config.scaleMode === "fit-width" &&
+                  "Resizes sheet width to fit page, flows rows vertically."}
+                {config.scaleMode === "normal" && "Prints cells at their 100% standard dimensions."}
+                {config.scaleMode === "fit-page" &&
+                  "Scales both width and height to fit on a single page."}
               </p>
             </div>
 
@@ -368,9 +373,11 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
                 ))}
               </select>
 
-              {config.marginId === 'custom' && (
+              {config.marginId === "custom" && (
                 <div className="flex items-center gap-2 mt-1 bg-slate-50 p-2 rounded-lg border border-slate-200">
-                  <span className="text-[11px] text-slate-600 font-medium whitespace-nowrap">Margin:</span>
+                  <span className="text-[11px] text-slate-600 font-medium whitespace-nowrap">
+                    Margin:
+                  </span>
                   <div className="relative flex-1">
                     <input
                       type="number"
@@ -411,7 +418,9 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
             </div>
 
             <div className="mt-auto pt-4 border-t border-slate-100 text-[11px] text-slate-400">
-              Clicking &ldquo;Print / Save as PDF&rdquo; invokes your native browser printing dialog. Select &ldquo;Save as PDF&rdquo; in the printer destination to generate a PDF file.
+              Clicking &ldquo;Print / Save as PDF&rdquo; invokes your native browser printing
+              dialog. Select &ldquo;Save as PDF&rdquo; in the printer destination to generate a PDF
+              file.
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import * as XLSX from "xlsx";
 
 const FONT_SIZES: Record<number, number> = {
   7.5: 10,
@@ -22,10 +22,10 @@ const FONT_SIZES: Record<number, number> = {
 let measureCtx: CanvasRenderingContext2D | null = null;
 
 function getMeasureContext(): CanvasRenderingContext2D | null {
-  if (typeof document === 'undefined') return null;
+  if (typeof document === "undefined") return null;
   if (!measureCtx) {
-    const canvas = document.createElement('canvas');
-    measureCtx = canvas.getContext('2d');
+    const canvas = document.createElement("canvas");
+    measureCtx = canvas.getContext("2d");
   }
   return measureCtx;
 }
@@ -56,7 +56,7 @@ function isCellMergedAcrossColumns(data: any, ri: number, ci: number, cell: any)
   if (cell?.merge && cell.merge[1] > 0) {
     return true;
   }
-  if (data.merges && typeof data.merges.getFirstIncludes === 'function') {
+  if (data.merges && typeof data.merges.getFirstIncludes === "function") {
     const range = data.merges.getFirstIncludes(ri, ci);
     if (range && range.sci !== range.eci) {
       return true;
@@ -87,7 +87,7 @@ function evaluateFormula(data: any, expr: string, visited: Set<string>): string 
   const trimmed = expr.trim();
 
   // Guard against circular recursion
-  if (visited.has(trimmed)) return '0';
+  if (visited.has(trimmed)) return "0";
   visited.add(trimmed);
 
   // Check for function calls like SUM(A1:B5), AVERAGE(...), etc.
@@ -99,37 +99,37 @@ function evaluateFormula(data: any, expr: string, visited: Set<string>): string 
     const values = extractFormulaArgs(data, argsRaw, visited);
 
     switch (fnName) {
-      case 'SUM': {
+      case "SUM": {
         const sum = values.reduce((acc, v) => acc + (Number(v) || 0), 0);
         return String(sum);
       }
-      case 'AVERAGE': {
+      case "AVERAGE": {
         const nums = values.map(Number).filter((n) => !isNaN(n));
-        if (nums.length === 0) return '0';
+        if (nums.length === 0) return "0";
         const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
         return String(Math.round(avg * 100) / 100);
       }
-      case 'MAX': {
+      case "MAX": {
         const nums = values.map(Number).filter((n) => !isNaN(n));
-        return nums.length ? String(Math.max(...nums)) : '0';
+        return nums.length ? String(Math.max(...nums)) : "0";
       }
-      case 'MIN': {
+      case "MIN": {
         const nums = values.map(Number).filter((n) => !isNaN(n));
-        return nums.length ? String(Math.min(...nums)) : '0';
+        return nums.length ? String(Math.min(...nums)) : "0";
       }
-      case 'CONCAT': {
-        return values.join('');
+      case "CONCAT": {
+        return values.join("");
       }
-      case 'IF': {
+      case "IF": {
         const parts = splitTopLevelCommas(argsRaw);
         if (parts.length >= 2) {
           const condition = evaluateFormula(data, parts[0], visited);
-          const isTrue = condition !== '0' && condition !== 'false' && condition !== '';
+          const isTrue = condition !== "0" && condition !== "false" && condition !== "";
           return isTrue
             ? evaluateFormula(data, parts[1], visited)
             : parts[2] !== undefined
               ? evaluateFormula(data, parts[2], visited)
-              : '';
+              : "";
         }
         break;
       }
@@ -142,20 +142,20 @@ function evaluateFormula(data: any, expr: string, visited: Set<string>): string 
       const { r, c } = XLSX.utils.decode_cell(trimmed.toUpperCase());
       const cell = data.rows?.getCell ? data.rows.getCell(r, c) : data.rows?.[r]?.cells?.[c];
       if (cell) {
-        if (cell.value !== undefined && cell.value !== null && cell.value !== '') {
+        if (cell.value !== undefined && cell.value !== null && cell.value !== "") {
           return String(cell.value);
         }
         if (cell.text !== undefined && cell.text !== null) {
           const str = String(cell.text);
-          if (str.startsWith('=')) {
+          if (str.startsWith("=")) {
             return evaluateFormula(data, str.slice(1), visited);
           }
           return str;
         }
       }
-      return '0';
+      return "0";
     } catch {
-      return '0';
+      return "0";
     }
   }
 
@@ -166,10 +166,14 @@ function evaluateFormula(data: any, expr: string, visited: Set<string>): string 
     const op = arithMatch[2];
     const rightVal = Number(evaluateFormula(data, arithMatch[3], visited)) || 0;
     switch (op) {
-      case '+': return String(leftVal + rightVal);
-      case '-': return String(leftVal - rightVal);
-      case '*': return String(leftVal * rightVal);
-      case '/': return rightVal !== 0 ? String(leftVal / rightVal) : '#DIV/0!';
+      case "+":
+        return String(leftVal + rightVal);
+      case "-":
+        return String(leftVal - rightVal);
+      case "*":
+        return String(leftVal * rightVal);
+      case "/":
+        return rightVal !== 0 ? String(leftVal / rightVal) : "#DIV/0!";
     }
   }
 
@@ -195,11 +199,11 @@ function extractFormulaArgs(data: any, argsRaw: string, visited: Set<string>): s
           for (let c = cMin; c <= cMax; c++) {
             const cell = data.rows?.getCell ? data.rows.getCell(r, c) : data.rows?.[r]?.cells?.[c];
             if (cell) {
-              if (cell.value !== undefined && cell.value !== null && cell.value !== '') {
+              if (cell.value !== undefined && cell.value !== null && cell.value !== "") {
                 values.push(String(cell.value));
-              } else if (cell.text !== undefined && cell.text !== null && cell.text !== '') {
+              } else if (cell.text !== undefined && cell.text !== null && cell.text !== "") {
                 const str = String(cell.text);
-                if (str.startsWith('=')) {
+                if (str.startsWith("=")) {
                   values.push(evaluateFormula(data, str.slice(1), visited));
                 } else {
                   values.push(str);
@@ -222,16 +226,16 @@ function extractFormulaArgs(data: any, argsRaw: string, visited: Set<string>): s
 function splitTopLevelCommas(str: string): string[] {
   const results: string[] = [];
   let depth = 0;
-  let current = '';
+  let current = "";
 
   for (let i = 0; i < str.length; i++) {
     const char = str[i];
-    if (char === '(') depth++;
-    else if (char === ')') depth--;
+    if (char === "(") depth++;
+    else if (char === ")") depth--;
 
-    if (char === ',' && depth === 0) {
+    if (char === "," && depth === 0) {
       results.push(current.trim());
-      current = '';
+      current = "";
     } else {
       current += char;
     }
@@ -249,14 +253,14 @@ function splitTopLevelCommas(str: string): string[] {
  */
 export function getCellDisplayText(data: any, ri: number, ci: number): string {
   const cell = data.rows?.getCell ? data.rows.getCell(ri, ci) : data.rows?.[ri]?.cells?.[ci];
-  if (!cell) return '';
+  if (!cell) return "";
 
-  if (cell.value !== undefined && cell.value !== null && cell.value !== '') {
+  if (cell.value !== undefined && cell.value !== null && cell.value !== "") {
     return String(cell.value);
   }
 
-  const rawText = cell.text !== undefined && cell.text !== null ? String(cell.text) : '';
-  if (!rawText.startsWith('=')) {
+  const rawText = cell.text !== undefined && cell.text !== null ? String(cell.text) : "";
+  if (!rawText.startsWith("=")) {
     return rawText;
   }
 
@@ -279,7 +283,7 @@ export interface AutofitOptions {
 export function calculateAutofitColumnWidth(
   data: any,
   colIndex: number,
-  options: AutofitOptions = {}
+  options: AutofitOptions = {},
 ): number {
   const minWidth = options.minWidth ?? (data?.cols?.minWidth || 60);
   const maxWidth = options.maxWidth ?? 800;
@@ -297,15 +301,16 @@ export function calculateAutofitColumnWidth(
 
   // 2. Iterate through all rows that contain cells for this column
   const rowsObj = data.rows?._ || data.rows;
-  if (rowsObj && typeof rowsObj === 'object') {
+  if (rowsObj && typeof rowsObj === "object") {
     for (const [riStr, row] of Object.entries(rowsObj as Record<string, any>)) {
       const ri = parseInt(riStr, 10);
       if (isNaN(ri)) continue;
 
-      const cell = typeof data.rows?.getCell === 'function'
-        ? data.rows.getCell(ri, colIndex)
-        : row?.cells?.[colIndex];
-      if (!cell || cell.text === undefined || cell.text === null || cell.text === '') {
+      const cell =
+        typeof data.rows?.getCell === "function"
+          ? data.rows.getCell(ri, colIndex)
+          : row?.cells?.[colIndex];
+      if (!cell || cell.text === undefined || cell.text === null || cell.text === "") {
         continue;
       }
 
@@ -320,21 +325,24 @@ export function calculateAutofitColumnWidth(
       hasContent = true;
 
       // Font styling
-      const style = typeof data.getCellStyleOrDefault === 'function'
-        ? data.getCellStyleOrDefault(ri, colIndex)
-        : (data.styles && cell.style !== undefined ? data.styles[cell.style] : null);
+      const style =
+        typeof data.getCellStyleOrDefault === "function"
+          ? data.getCellStyleOrDefault(ri, colIndex)
+          : data.styles && cell.style !== undefined
+            ? data.styles[cell.style]
+            : null;
 
       const fontObj = style?.font || {};
-      const fontName = fontObj.name || 'Arial';
+      const fontName = fontObj.name || "Arial";
       const fontSizePt = fontObj.size || 10;
       const fontSizePx = getFontSizePx(fontSizePt);
       const isBold = Boolean(fontObj.bold);
       const isItalic = Boolean(fontObj.italic);
 
-      const fontStyle = `${isItalic ? 'italic ' : ''}${isBold ? 'bold ' : ''}${fontSizePx}px ${fontName}, sans-serif`;
+      const fontStyle = `${isItalic ? "italic " : ""}${isBold ? "bold " : ""}${fontSizePx}px ${fontName}, sans-serif`;
 
       // Multiline support: measure each line individually
-      const lines = displayText.split('\n');
+      const lines = displayText.split("\n");
       for (const line of lines) {
         const lineWidth = measureTextWidth(line, fontStyle);
         if (lineWidth > maxTextWidth) {
@@ -351,7 +359,7 @@ export function calculateAutofitColumnWidth(
 
   // Extra space if auto-filter dropdown icon is active on this column
   let extraIconSpace = 0;
-  if (data.autoFilter && typeof data.autoFilter.active === 'function' && data.autoFilter.active()) {
+  if (data.autoFilter && typeof data.autoFilter.active === "function" && data.autoFilter.active()) {
     try {
       const hrange = data.autoFilter.hrange();
       if (hrange && colIndex >= hrange.sci && colIndex <= hrange.eci) {
@@ -371,7 +379,7 @@ export function calculateAutofitColumnWidth(
  */
 export function calculateAutofitAllColumns(
   data: any,
-  options: AutofitOptions = {}
+  options: AutofitOptions = {},
 ): Map<number, number> {
   const result = new Map<number, number>();
   if (!data) return result;

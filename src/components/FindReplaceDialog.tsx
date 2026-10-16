@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { X, Search, Replace, ChevronDown, ChevronUp } from 'lucide-react';
-import type { XSpreadsheetData } from '../utils/spreadsheetConverter';
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { X, Search, Replace, ChevronDown, ChevronUp } from "lucide-react";
+import type { XSpreadsheetData } from "../utils/spreadsheetConverter";
 import {
   searchWorkbook,
   replaceSingleOccurrence,
   replaceAllOccurrences,
-} from '../utils/findReplace';
+} from "../utils/findReplace";
 
 interface FindReplaceDialogProps {
   isOpen: boolean;
@@ -23,8 +23,8 @@ export const FindReplaceDialog: React.FC<FindReplaceDialogProps> = ({
   onUpdateData,
 }) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [findText, setFindText] = useState('');
-  const [replaceText, setReplaceText] = useState('');
+  const [findText, setFindText] = useState("");
+  const [replaceText, setReplaceText] = useState("");
   const [matchCase, setMatchCase] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -89,7 +89,7 @@ export const FindReplaceDialog: React.FC<FindReplaceDialogProps> = ({
       currentMatch,
       findText,
       replaceText,
-      matchCase
+      matchCase,
     );
     onUpdateData(updatedData, `Replaced cell ${currentMatch.cellRef}`);
     setStatusMessage(`Replaced cell ${currentMatch.cellRef}`);
@@ -101,11 +101,12 @@ export const FindReplaceDialog: React.FC<FindReplaceDialogProps> = ({
       spreadsheetData,
       findText,
       replaceText,
-      matchCase
+      matchCase,
     );
-    const msg = count > 0
-      ? `Replaced ${count} occurrence${count > 1 ? 's' : ''}`
-      : 'No occurrences found to replace';
+    const msg =
+      count > 0
+        ? `Replaced ${count} occurrence${count > 1 ? "s" : ""}`
+        : "No occurrences found to replace";
     onUpdateData(updatedData, msg);
     setStatusMessage(msg);
   };
@@ -155,7 +156,7 @@ export const FindReplaceDialog: React.FC<FindReplaceDialogProps> = ({
                   setStatusMessage(null);
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     handleNext();
                   }
@@ -180,7 +181,7 @@ export const FindReplaceDialog: React.FC<FindReplaceDialogProps> = ({
               value={replaceText}
               onChange={(e) => setReplaceText(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === "Enter") {
                   e.preventDefault();
                   handleReplaceCurrent();
                 }
@@ -209,7 +210,9 @@ export const FindReplaceDialog: React.FC<FindReplaceDialogProps> = ({
           {/* Feedback & Match coordinates */}
           {(statusMessage || (matches.length > 0 && safeIndex >= 0)) && (
             <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 font-medium text-[11px] flex items-center justify-between">
-              <span>{statusMessage || `${matches.length} match${matches.length > 1 ? 'es' : ''} found`}</span>
+              <span>
+                {statusMessage || `${matches.length} match${matches.length > 1 ? "es" : ""} found`}
+              </span>
               {matches.length > 0 && safeIndex >= 0 && (
                 <span className="font-mono text-blue-700 font-semibold">
                   {matches[safeIndex].sheetName} ! {matches[safeIndex].cellRef}

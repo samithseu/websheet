@@ -1,5 +1,5 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { AlertTriangle, RotateCcw, Home } from 'lucide-react';
+import { Component, type ErrorInfo, type ReactNode } from "react";
+import { AlertTriangle, RotateCcw, Home } from "lucide-react";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -23,7 +23,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   public override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('Spreadsheet ErrorBoundary caught an unhandled error:', error, errorInfo);
+    console.error("Spreadsheet ErrorBoundary caught an unhandled error:", error, errorInfo);
     this.setState({ errorInfo });
   }
 
@@ -51,15 +51,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               <div className="p-2 bg-red-50 rounded-lg shrink-0">
                 <AlertTriangle className="w-6 h-6" />
               </div>
-              <h2 className="text-lg font-bold text-slate-900">
-                Spreadsheet Display Error
-              </h2>
+              <h2 className="text-lg font-bold text-slate-900">Spreadsheet Display Error</h2>
             </div>
 
             <p className="text-sm text-slate-600 leading-relaxed">
-              An unexpected error occurred while rendering the spreadsheet canvas.
-              Your file is safe and has not been altered. You can reload the page or return
-              to the home screen to open another workbook.
+              An unexpected error occurred while rendering the spreadsheet canvas. Your file is safe
+              and has not been altered. You can reload the page or return to the home screen to open
+              another workbook.
             </p>
 
             <div className="flex items-center gap-3 pt-2">

@@ -1,5 +1,5 @@
-import React from 'react';
-import { UploadCloud, FileSpreadsheet } from 'lucide-react';
+import React from "react";
+import { UploadCloud, FileSpreadsheet } from "lucide-react";
 
 interface DragDropOverlayProps {
   isDragging: boolean;
@@ -16,7 +16,8 @@ export const DragDropOverlay: React.FC<DragDropOverlayProps> = ({ isDragging }) 
         </div>
         <h3 className="text-lg font-bold text-slate-800">Drop spreadsheet file here</h3>
         <p className="text-xs text-slate-600 mt-1.5">
-          Supports <span className="font-semibold text-blue-600">.xlsx, .xls, .csv, .tsv, .ods</span>
+          Supports{" "}
+          <span className="font-semibold text-blue-600">.xlsx, .xls, .csv, .tsv, .ods</span>
         </p>
         <div className="mt-3.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[11px] font-medium border border-slate-200">
           <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600" />

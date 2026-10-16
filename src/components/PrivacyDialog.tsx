@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { ShieldCheck, X, HardDrive, WifiOff, Lock, CheckCircle2, Layers } from 'lucide-react';
+import React, { useEffect, useRef } from "react";
+import { ShieldCheck, X, HardDrive, WifiOff, Lock, CheckCircle2, Layers } from "lucide-react";
 
 interface PrivacyDialogProps {
   isOpen: boolean;
@@ -42,7 +42,9 @@ export const PrivacyDialog: React.FC<PrivacyDialogProps> = ({ isOpen, onClose })
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-slate-900">Privacy & Security Guarantee</h2>
+              <h2 className="text-base font-semibold text-slate-900">
+                Privacy & Security Guarantee
+              </h2>
               <p className="text-xs text-blue-600 font-medium">100% Client-Side Workbench</p>
             </div>
           </div>
@@ -64,7 +66,9 @@ export const PrivacyDialog: React.FC<PrivacyDialogProps> = ({ isOpen, onClose })
             <div>
               <span className="font-semibold block text-slate-900">Zero Data Egress</span>
               <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
-                Your spreadsheets are never uploaded to any remote server or third-party service. All file parsing, table rendering, editing, and file generation happen strictly in your browser's local memory.
+                Your spreadsheets are never uploaded to any remote server or third-party service.
+                All file parsing, table rendering, editing, and file generation happen strictly in
+                your browser's local memory.
               </p>
             </div>
           </div>
@@ -77,7 +81,9 @@ export const PrivacyDialog: React.FC<PrivacyDialogProps> = ({ isOpen, onClose })
               <div>
                 <p className="font-medium text-slate-800">App-Shell Precaching Only</p>
                 <p className="text-slate-500 mt-0.5 leading-relaxed">
-                  The Service Worker caches application code, stylesheets, and icons only so WebSheet works offline. Spreadsheet bytes never enter the cache, background sync, or persistent storage because they never leave your active tab.
+                  The Service Worker caches application code, stylesheets, and icons only so
+                  WebSheet works offline. Spreadsheet bytes never enter the cache, background sync,
+                  or persistent storage because they never leave your active tab.
                 </p>
               </div>
             </div>
@@ -89,7 +95,8 @@ export const PrivacyDialog: React.FC<PrivacyDialogProps> = ({ isOpen, onClose })
               <div>
                 <p className="font-medium text-slate-800">Direct In-Memory Processing</p>
                 <p className="text-slate-500 mt-0.5 leading-relaxed">
-                  Files are opened and saved using modern HTML5 File and File System Access APIs. No cloud storage, telemetry, or analytics scripts are bundled.
+                  Files are opened and saved using modern HTML5 File and File System Access APIs. No
+                  cloud storage, telemetry, or analytics scripts are bundled.
                 </p>
               </div>
             </div>
@@ -101,7 +108,8 @@ export const PrivacyDialog: React.FC<PrivacyDialogProps> = ({ isOpen, onClose })
               <div>
                 <p className="font-medium text-slate-800">Offline Standalone PWA</p>
                 <p className="text-slate-500 mt-0.5 leading-relaxed">
-                  Disconnect your network or enable airplane mode at any time. WebSheet functions entirely standalone without internet access.
+                  Disconnect your network or enable airplane mode at any time. WebSheet functions
+                  entirely standalone without internet access.
                 </p>
               </div>
             </div>
@@ -113,7 +121,8 @@ export const PrivacyDialog: React.FC<PrivacyDialogProps> = ({ isOpen, onClose })
               <div>
                 <p className="font-medium text-slate-800">Verifiable in DevTools</p>
                 <p className="text-slate-500 mt-0.5 leading-relaxed">
-                  Open browser Developer Tools (F12) &gt; Network tab. When you create, edit, calculate, or export spreadsheets, zero HTTP network requests are made.
+                  Open browser Developer Tools (F12) &gt; Network tab. When you create, edit,
+                  calculate, or export spreadsheets, zero HTTP network requests are made.
                 </p>
               </div>
             </div>

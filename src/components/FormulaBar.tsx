@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { autoCloseParentheses } from '../utils/spreadsheetConverter';
+import React, { useState } from "react";
+import { autoCloseParentheses } from "../utils/spreadsheetConverter";
 
 export interface SelectionStats {
   count: number;
@@ -39,18 +39,18 @@ export const FormulaBar: React.FC<FormulaBarProps> = ({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       const closed = autoCloseParentheses(inputText);
       setInputText(closed);
       onCommitCellText(closed);
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       setInputText(activeCellText);
     }
   };
 
   const handleBlur = () => {
     if (inputText !== activeCellText) {
-      const textToCommit = inputText.startsWith('=') ? autoCloseParentheses(inputText) : inputText;
+      const textToCommit = inputText.startsWith("=") ? autoCloseParentheses(inputText) : inputText;
       onCommitCellText(textToCommit);
     }
   };
@@ -69,7 +69,7 @@ export const FormulaBar: React.FC<FormulaBarProps> = ({
           className="h-6 px-2.5 bg-slate-50 border border-slate-200 rounded-md font-mono font-semibold text-slate-700 flex items-center justify-center min-w-13 text-center"
           title="Active cell reference"
         >
-          {activeCellCoord || 'A1'}
+          {activeCellCoord || "A1"}
         </div>
 
         {/* fx button */}
@@ -104,26 +104,41 @@ export const FormulaBar: React.FC<FormulaBarProps> = ({
       {selectionStats && selectionStats.count > 1 && (
         <div className="hidden lg:flex items-center gap-2 text-[11px] text-slate-600 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200 shrink-0 font-medium">
           <span>
-            Count: <strong className="font-semibold text-slate-800 font-mono">{selectionStats.count}</strong>
+            Count:{" "}
+            <strong className="font-semibold text-slate-800 font-mono">
+              {selectionStats.count}
+            </strong>
           </span>
 
           {selectionStats.numericCount > 0 && (
             <>
               <div className="h-3 w-px bg-slate-200" />
               <span>
-                Sum: <strong className="font-semibold text-blue-700 font-mono">{formatNumber(selectionStats.sum)}</strong>
+                Sum:{" "}
+                <strong className="font-semibold text-blue-700 font-mono">
+                  {formatNumber(selectionStats.sum)}
+                </strong>
               </span>
               <div className="h-3 w-px bg-slate-200" />
               <span>
-                Avg: <strong className="font-semibold text-slate-800 font-mono">{formatNumber(selectionStats.avg)}</strong>
+                Avg:{" "}
+                <strong className="font-semibold text-slate-800 font-mono">
+                  {formatNumber(selectionStats.avg)}
+                </strong>
               </span>
               <div className="h-3 w-px bg-slate-200" />
               <span>
-                Min: <strong className="font-semibold text-slate-800 font-mono">{formatNumber(selectionStats.min)}</strong>
+                Min:{" "}
+                <strong className="font-semibold text-slate-800 font-mono">
+                  {formatNumber(selectionStats.min)}
+                </strong>
               </span>
               <div className="h-3 w-px bg-slate-200" />
               <span>
-                Max: <strong className="font-semibold text-slate-800 font-mono">{formatNumber(selectionStats.max)}</strong>
+                Max:{" "}
+                <strong className="font-semibold text-slate-800 font-mono">
+                  {formatNumber(selectionStats.max)}
+                </strong>
               </span>
             </>
           )}

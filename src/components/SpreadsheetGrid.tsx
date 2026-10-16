@@ -1,17 +1,17 @@
-import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
-import 'x-data-spreadsheet';
-import * as XLSX from 'xlsx';
+import { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
+import "x-data-spreadsheet";
+import * as XLSX from "xlsx";
 import {
   normalizeSpreadsheetData,
   isFormulaSupportedByGrid,
   autoCloseParentheses,
   isFormulaAwaitingOperand,
   type XSpreadsheetData,
-} from '../utils/spreadsheetConverter';
-import type { SelectionStats } from './FormulaBar';
-import { getSpreadsheetFactory, type XSpreadsheetInstance } from '../types/spreadsheet';
-import { calculateAutofitColumnWidth, calculateAutofitAllColumns } from '../utils/columnAutofit';
-import type { CellRange } from '../utils/printRenderer';
+} from "../utils/spreadsheetConverter";
+import type { SelectionStats } from "./FormulaBar";
+import { getSpreadsheetFactory, type XSpreadsheetInstance } from "../types/spreadsheet";
+import { calculateAutofitColumnWidth, calculateAutofitAllColumns } from "../utils/columnAutofit";
+import type { CellRange } from "../utils/printRenderer";
 
 export interface SpreadsheetGridRef {
   loadData: (data: XSpreadsheetData) => void;
@@ -51,7 +51,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       onPrintRequest,
       onAllSheetsDeleted,
     },
-    ref
+    ref,
   ) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const spreadsheetInstanceRef = useRef<XSpreadsheetInstance | null>(null);
@@ -90,12 +90,12 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       isActive: false,
       targetR: 0,
       targetC: 0,
-      baseText: '',
+      baseText: "",
       hasActiveToken: false,
       refRange: null,
       dragAnchor: null,
       isDraggingRange: false,
-      originalText: '',
+      originalText: "",
     });
 
     useEffect(() => {
@@ -122,7 +122,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
             }
             onDataChangeRef.current(spreadsheetInstanceRef.current.getData());
           } catch (err) {
-            console.error('Failed to load data into spreadsheet grid:', err);
+            console.error("Failed to load data into spreadsheet grid:", err);
           }
         }
       },
@@ -137,7 +137,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           const s = spreadsheetInstanceRef.current;
           const cell = s.cell(rowIndex, colIndex);
           if (cell) {
-            if (!text.startsWith('=')) {
+            if (!text.startsWith("=")) {
               delete (cell as any).formula;
             } else if (!isFormulaSupportedByGrid(text)) {
               (cell as any).formula = text.slice(1);
@@ -149,7 +149,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           try {
             s.reRender();
           } catch (err) {
-            console.warn('Error during reRender after setCellText:', err);
+            console.warn("Error during reRender after setCellText:", err);
           }
           onDataChangeRef.current(s.getData());
         }
@@ -197,13 +197,13 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           // Focus cell coordinate
           const cellCoord = XLSX.utils.encode_cell({ r: rowIndex, c: colIndex });
           const cell = s.cell(rowIndex, colIndex, sheetIndex);
-          const text = cell?.text !== undefined ? String(cell.text) : '';
+          const text = cell?.text !== undefined ? String(cell.text) : "";
           activeCellPosRef.current = { r: rowIndex, c: colIndex };
           onActiveCellChangeRef.current(cellCoord, text, rowIndex, colIndex);
         }
       },
       getActiveSheetName: () => {
-        return spreadsheetInstanceRef.current?.sheet?.data?.name || 'Sheet1';
+        return spreadsheetInstanceRef.current?.sheet?.data?.name || "Sheet1";
       },
       getActiveSheetIndex: () => {
         const s = spreadsheetInstanceRef.current;
@@ -234,16 +234,16 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       const container = containerRef.current;
       if (!container) return;
 
-      container.innerHTML = '';
+      container.innerHTML = "";
 
       const factory = getSpreadsheetFactory();
       if (!factory) {
-        console.error('window.x_spreadsheet is not available');
+        console.error("window.x_spreadsheet is not available");
         return;
       }
 
       const s = factory(container, {
-        mode: 'edit',
+        mode: "edit",
         showToolbar: true,
         showGrid: true,
         showContextmenu: true,
@@ -265,14 +265,14 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       });
 
       if (cancelled) {
-        container.innerHTML = '';
+        container.innerHTML = "";
         return;
       }
 
       spreadsheetInstanceRef.current = s;
 
       // Intercept deleteSheet to handle deleting the last sheet or multi-sheet deletion
-      if (typeof (s as any).deleteSheet === 'function') {
+      if (typeof (s as any).deleteSheet === "function") {
         const origDeleteSheet = (s as any).deleteSheet.bind(s);
         (s as any).deleteSheet = function () {
           if (!s.datas || s.datas.length <= 1) {
@@ -289,49 +289,50 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       }
 
       // Reference Highlight Overlay element for interactive formula reference selection
-      const overlayerCEl = (container.querySelector('.x-spreadsheet-overlayer-content') ||
-        container.querySelector('.x-spreadsheet-overlayer')) as HTMLElement | null;
-      const refHighlightEl = document.createElement('div');
-      refHighlightEl.className = 'x-spreadsheet-formula-ref-highlight';
+      const overlayerCEl = (container.querySelector(".x-spreadsheet-overlayer-content") ||
+        container.querySelector(".x-spreadsheet-overlayer")) as HTMLElement | null;
+      const refHighlightEl = document.createElement("div");
+      refHighlightEl.className = "x-spreadsheet-formula-ref-highlight";
       Object.assign(refHighlightEl.style, {
-        position: 'absolute',
-        border: '2px dashed #2563eb',
-        backgroundColor: 'rgba(37, 99, 235, 0.09)',
-        borderRadius: '3px',
-        pointerEvents: 'none',
-        zIndex: '11',
-        display: 'none',
-        boxSizing: 'border-box',
-        transition: 'left 0.03s ease-out, top 0.03s ease-out, width 0.03s ease-out, height 0.03s ease-out',
+        position: "absolute",
+        border: "2px dashed #2563eb",
+        backgroundColor: "rgba(37, 99, 235, 0.09)",
+        borderRadius: "3px",
+        pointerEvents: "none",
+        zIndex: "11",
+        display: "none",
+        boxSizing: "border-box",
+        transition:
+          "left 0.03s ease-out, top 0.03s ease-out, width 0.03s ease-out, height 0.03s ease-out",
       });
       overlayerCEl?.appendChild(refHighlightEl);
 
       const updateRefHighlight = (range: CellRange | null) => {
         if (!range) {
-          refHighlightEl.style.display = 'none';
+          refHighlightEl.style.display = "none";
           return;
         }
         const currentSheet = (s as any).sheet;
         if (!currentSheet?.data) return;
         const rect = currentSheet.data.getRect(range);
         if (!rect || rect.width <= 0 || rect.height <= 0) {
-          refHighlightEl.style.display = 'none';
+          refHighlightEl.style.display = "none";
           return;
         }
         refHighlightEl.style.left = `${rect.left - 0.8}px`;
         refHighlightEl.style.top = `${rect.top - 0.8}px`;
         refHighlightEl.style.width = `${rect.width + 0.8}px`;
         refHighlightEl.style.height = `${rect.height + 0.8}px`;
-        refHighlightEl.style.display = 'block';
+        refHighlightEl.style.display = "block";
       };
 
       const hideRefHighlight = () => {
-        refHighlightEl.style.display = 'none';
+        refHighlightEl.style.display = "none";
       };
 
       // Defensive try-catch around canvas table render & sync reference highlight overlay
       const sheetInstance = (s as any).sheet;
-      if (sheetInstance?.table && typeof sheetInstance.table.render === 'function') {
+      if (sheetInstance?.table && typeof sheetInstance.table.render === "function") {
         const origTableRender = sheetInstance.table.render.bind(sheetInstance.table);
         sheetInstance.table.render = function () {
           try {
@@ -340,7 +341,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
               updateRefHighlight(formulaRefSessionRef.current.refRange);
             }
           } catch (err) {
-            console.warn('Spreadsheet canvas table render error caught safely:', err);
+            console.warn("Spreadsheet canvas table render error caught safely:", err);
           }
         };
       }
@@ -350,7 +351,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         const normalizedInitial = normalizeSpreadsheetData(initialDataRef.current);
         s.loadData(normalizedInitial);
       } catch (err) {
-        console.error('Failed to load initial data in spreadsheet grid:', err);
+        console.error("Failed to load initial data in spreadsheet grid:", err);
       }
 
       // Intercept toolbar printer action to trigger unified PrintDialog
@@ -360,24 +361,24 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         };
       }
 
-      const printBtn = container.querySelector(
-        '.x-spreadsheet-icon .print, .x-spreadsheet-icon-img.print'
-      )?.closest('.x-spreadsheet-toolbar-btn') as HTMLElement | null;
+      const printBtn = container
+        .querySelector(".x-spreadsheet-icon .print, .x-spreadsheet-icon-img.print")
+        ?.closest(".x-spreadsheet-toolbar-btn") as HTMLElement | null;
       if (printBtn) {
         printBtn.addEventListener(
-          'click',
+          "click",
           (e) => {
             e.preventDefault();
             e.stopPropagation();
             onPrintRequestRef.current?.();
           },
-          true
+          true,
         );
       }
 
       // Wrap editor.setCell to guarantee opaque background and initialize formula session
       const editor = (s as any).sheet?.editor;
-      if (editor && typeof editor.setCell === 'function') {
+      if (editor && typeof editor.setCell === "function") {
         const origSetCell = editor.setCell.bind(editor);
         editor.setCell = function (cell: any, validator: any) {
           origSetCell(cell, validator);
@@ -385,7 +386,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           if (sheet?.data?.selector) {
             const { ri, ci } = sheet.data.selector;
             const style = sheet.data.getCellStyleOrDefault(ri, ci);
-            const bg = style?.bgcolor || '#ffffff';
+            const bg = style?.bgcolor || "#ffffff";
             if (editor.textEl?.el) {
               editor.textEl.el.style.backgroundColor = bg;
             }
@@ -394,14 +395,15 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
             }
 
             const currentCell = sheet.data.getCell(ri, ci);
-            const currentCellText = currentCell?.text !== undefined ? String(currentCell.text) : '';
+            const currentCellText = currentCell?.text !== undefined ? String(currentCell.text) : "";
             const cellFormula = (currentCell as any)?.formula;
-            const currentFullText = cellFormula && !currentCellText.startsWith('=')
-              ? `=${cellFormula}`
-              : (editor.inputText || currentCellText);
+            const currentFullText =
+              cellFormula && !currentCellText.startsWith("=")
+                ? `=${cellFormula}`
+                : editor.inputText || currentCellText;
 
             formulaRefSessionRef.current = {
-              isActive: currentFullText.startsWith('='),
+              isActive: currentFullText.startsWith("="),
               targetR: ri,
               targetC: ci,
               baseText: currentFullText,
@@ -417,7 +419,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       }
 
       // Wrap editor.clear to ensure clean state and hide reference highlight
-      if (editor && typeof editor.clear === 'function') {
+      if (editor && typeof editor.clear === "function") {
         const origClear = editor.clear.bind(editor);
         editor.clear = function () {
           hideRefHighlight();
@@ -436,20 +438,20 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
 
         const { r, c } = activeCellPosRef.current;
         const session = formulaRefSessionRef.current;
-        session.isActive = text.startsWith('=');
+        session.isActive = text.startsWith("=");
         session.targetR = r;
         session.targetC = c;
         if (!session.hasActiveToken) {
           session.baseText = text;
         }
 
-        if (text.startsWith('=')) {
-          const editorEl = container.querySelector('.x-spreadsheet-editor') as HTMLElement | null;
-          const isEditing = editorEl && editorEl.style.display !== 'none';
+        if (text.startsWith("=")) {
+          const editorEl = container.querySelector(".x-spreadsheet-editor") as HTMLElement | null;
+          const isEditing = editorEl && editorEl.style.display !== "none";
           if (!isEditing) {
             const sOffset = sheet.data.getRect({ sri: r, sci: c, eri: r, eci: c });
             const tOffset = sheet.getTableOffset();
-            const sPosition = sOffset.top > tOffset.height / 2 ? 'bottom' : 'top';
+            const sPosition = sOffset.top > tOffset.height / 2 ? "bottom" : "top";
             sheet.editor.setOffset(sOffset, sPosition);
             const cell = sheet.data.getCell(r, c) || sheet.data.getSelectedCell();
             sheet.editor.setCell(cell, sheet.data.getSelectedValidator());
@@ -460,9 +462,9 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
 
       // Listen to keystrokes in editor textarea to track operators and argument boundaries
       const handleEditorTextareaInput = () => {
-        const currentText = editor?.inputText || '';
+        const currentText = editor?.inputText || "";
         const session = formulaRefSessionRef.current;
-        if (currentText.startsWith('=')) {
+        if (currentText.startsWith("=")) {
           session.isActive = true;
           if (isFormulaAwaitingOperand(currentText)) {
             session.baseText = currentText;
@@ -478,11 +480,11 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         }
       };
 
-      editor?.textEl?.el?.addEventListener('input', handleEditorTextareaInput);
+      editor?.textEl?.el?.addEventListener("input", handleEditorTextareaInput);
 
       // Wrap selector.set so keyboard arrow navigation into merged cells targets the top-left cell
       const selector = (s as any).sheet?.selector;
-      if (selector && typeof selector.set === 'function') {
+      if (selector && typeof selector.set === "function") {
         const origSelectorSet = selector.set.bind(selector);
         selector.set = function (ri: number, ci: number, indexesUpdated = true) {
           const sheet = (s as any).sheet;
@@ -496,34 +498,34 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       }
 
       // Top-left "Select All" button (corner above row 1, left of column A)
-      const sheetEl = container.querySelector('.x-spreadsheet-sheet') as HTMLElement | null;
+      const sheetEl = container.querySelector(".x-spreadsheet-sheet") as HTMLElement | null;
       const indexWidth = (s as any).sheet?.data?.cols?.indexWidth || 60;
       const rowHeight = (s as any).sheet?.data?.rows?.height || 26;
 
-      const selectAllBtn = document.createElement('button');
-      selectAllBtn.type = 'button';
-      selectAllBtn.className = 'x-spreadsheet-select-all-btn';
-      selectAllBtn.title = 'Select all cells';
-      selectAllBtn.setAttribute('aria-label', 'Select all cells');
+      const selectAllBtn = document.createElement("button");
+      selectAllBtn.type = "button";
+      selectAllBtn.className = "x-spreadsheet-select-all-btn";
+      selectAllBtn.title = "Select all cells";
+      selectAllBtn.setAttribute("aria-label", "Select all cells");
       Object.assign(selectAllBtn.style, {
-        position: 'absolute',
-        top: '0',
-        left: '0',
+        position: "absolute",
+        top: "0",
+        left: "0",
         width: `${indexWidth}px`,
         height: `${rowHeight}px`,
-        zIndex: '12',
-        backgroundColor: '#f4f5f8',
-        borderRight: '1px solid #e6e6e6',
-        borderBottom: '1px solid #e6e6e6',
-        borderTop: 'none',
-        borderLeft: 'none',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'flex-end',
-        padding: '0 4px 4px 0',
-        outline: 'none',
-        transition: 'background-color 0.15s ease, border-color 0.15s ease',
+        zIndex: "12",
+        backgroundColor: "#f4f5f8",
+        borderRight: "1px solid #e6e6e6",
+        borderBottom: "1px solid #e6e6e6",
+        borderTop: "none",
+        borderLeft: "none",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "flex-end",
+        padding: "0 4px 4px 0",
+        outline: "none",
+        transition: "background-color 0.15s ease, border-color 0.15s ease",
       });
 
       selectAllBtn.innerHTML = `
@@ -533,17 +535,17 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       `;
 
       const updateSelectAllBtnVisual = () => {
-        const poly = selectAllBtn.querySelector('polygon');
+        const poly = selectAllBtn.querySelector("polygon");
         if (isAllSelectedRef.current) {
-          selectAllBtn.style.backgroundColor = '#dbeafe';
-          selectAllBtn.style.borderRightColor = '#93c5fd';
-          selectAllBtn.style.borderBottomColor = '#93c5fd';
-          if (poly) poly.setAttribute('fill', '#2563eb');
+          selectAllBtn.style.backgroundColor = "#dbeafe";
+          selectAllBtn.style.borderRightColor = "#93c5fd";
+          selectAllBtn.style.borderBottomColor = "#93c5fd";
+          if (poly) poly.setAttribute("fill", "#2563eb");
         } else {
-          selectAllBtn.style.backgroundColor = '#f4f5f8';
-          selectAllBtn.style.borderRightColor = '#e6e6e6';
-          selectAllBtn.style.borderBottomColor = '#e6e6e6';
-          if (poly) poly.setAttribute('fill', '#94a3b8');
+          selectAllBtn.style.backgroundColor = "#f4f5f8";
+          selectAllBtn.style.borderRightColor = "#e6e6e6";
+          selectAllBtn.style.borderBottomColor = "#e6e6e6";
+          if (poly) poly.setAttribute("fill", "#94a3b8");
         }
       };
 
@@ -554,15 +556,15 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         selectAllBtn.style.height = `${rh}px`;
       };
 
-      selectAllBtn.addEventListener('mouseenter', () => {
+      selectAllBtn.addEventListener("mouseenter", () => {
         if (!isAllSelectedRef.current) {
-          selectAllBtn.style.backgroundColor = '#e2e8f0';
+          selectAllBtn.style.backgroundColor = "#e2e8f0";
         }
       });
 
-      selectAllBtn.addEventListener('mouseleave', () => {
+      selectAllBtn.addEventListener("mouseleave", () => {
         if (!isAllSelectedRef.current) {
-          selectAllBtn.style.backgroundColor = '#f4f5f8';
+          selectAllBtn.style.backgroundColor = "#f4f5f8";
         }
       });
 
@@ -572,24 +574,29 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         const { data, selector, table, toolbar } = sheet;
 
         selector.set(-1, -1);
-        sheet.trigger('cells-selected', data.getCell(0, 0), selector.range);
+        sheet.trigger("cells-selected", data.getCell(0, 0), selector.range);
         toolbar?.reset?.();
         table.render();
 
         isAllSelectedRef.current = true;
         updateSelectAllBtnVisual();
 
-        selectedRangeRef.current = { sri: 0, sci: 0, eri: data.rows.len - 1, eci: data.cols.len - 1 };
+        selectedRangeRef.current = {
+          sri: 0,
+          sci: 0,
+          eri: data.rows.len - 1,
+          eci: data.cols.len - 1,
+        };
 
         const startCoord = XLSX.utils.encode_cell({ r: 0, c: 0 });
         const endCoord = XLSX.utils.encode_cell({ r: data.rows.len - 1, c: data.cols.len - 1 });
         const rangeCoord = `${startCoord}:${endCoord}`;
         const firstCell = data.getCell(0, 0);
-        const text = firstCell?.text !== undefined ? String(firstCell.text) : '';
+        const text = firstCell?.text !== undefined ? String(firstCell.text) : "";
         onActiveCellChangeRef.current(rangeCoord, text, 0, 0);
       };
 
-      selectAllBtn.addEventListener('click', (e) => {
+      selectAllBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         handleSelectAll();
       });
@@ -635,14 +642,15 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         const { r, c } = activeCellPosRef.current;
         const currentSheetData = s.cell(r, c);
         const cellFormula = (currentSheetData as any)?.formula;
-        const cellRawText = currentSheetData?.text !== undefined ? String(currentSheetData.text) : '';
-        const text = cellFormula && !cellRawText.startsWith('=') ? `=${cellFormula}` : cellRawText;
+        const cellRawText =
+          currentSheetData?.text !== undefined ? String(currentSheetData.text) : "";
+        const text = cellFormula && !cellRawText.startsWith("=") ? `=${cellFormula}` : cellRawText;
         const coord = XLSX.utils.encode_cell({ r, c });
         onActiveCellChangeRef.current(coord, text, r, c);
       });
 
       // Bind cell selected
-      s.on('cell-selected', (cell: any, ri: number, ci: number) => {
+      s.on("cell-selected", (cell: any, ri: number, ci: number) => {
         isAllSelectedRef.current = false;
         updateSelectAllBtnVisual();
         const sheet = (s as any).sheet;
@@ -658,17 +666,19 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           ? `${XLSX.utils.encode_cell({ r: merge.sri, c: merge.sci })}:${XLSX.utils.encode_cell({ r: merge.eri, c: merge.eci })}`
           : XLSX.utils.encode_cell({ r: targetR, c: targetC });
         const targetFormula = (targetCell as any)?.formula;
-        const targetRawText = targetCell?.text !== undefined ? String(targetCell.text) : '';
-        const text = targetFormula && !targetRawText.startsWith('=') ? `=${targetFormula}` : targetRawText;
+        const targetRawText = targetCell?.text !== undefined ? String(targetCell.text) : "";
+        const text =
+          targetFormula && !targetRawText.startsWith("=") ? `=${targetFormula}` : targetRawText;
         onActiveCellChangeRef.current(coord, text, targetR, targetC);
         onSelectionStatsChangeRef.current(null);
       });
 
       // Bind multiple cells selected for stats
-      s.on('cells-selected', (_cell: any, { sri, sci, eri, eci }: any) => {
+      s.on("cells-selected", (_cell: any, { sri, sci, eri, eci }: any) => {
         const totalRows = (s as any).sheet?.data?.rows?.len || 100;
         const totalCols = (s as any).sheet?.data?.cols?.len || 26;
-        isAllSelectedRef.current = sri === 0 && sci === 0 && eri >= totalRows - 1 && eci >= totalCols - 1;
+        isAllSelectedRef.current =
+          sri === 0 && sci === 0 && eri >= totalRows - 1 && eci >= totalCols - 1;
         updateSelectAllBtnVisual();
 
         selectedRangeRef.current = { sri, sci, eri, eci };
@@ -679,8 +689,9 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
 
         const activeCell = s.cell(sri, sci);
         const activeFormula = (activeCell as any)?.formula;
-        const activeRawText = activeCell?.text !== undefined ? String(activeCell.text) : '';
-        const text = activeFormula && !activeRawText.startsWith('=') ? `=${activeFormula}` : activeRawText;
+        const activeRawText = activeCell?.text !== undefined ? String(activeCell.text) : "";
+        const text =
+          activeFormula && !activeRawText.startsWith("=") ? `=${activeFormula}` : activeRawText;
         onActiveCellChangeRef.current(rangeCoord, text, sri, sci);
 
         // Calculate selection stats
@@ -694,7 +705,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           for (let c = sci; c <= eci; c++) {
             count++;
             const cObj = s.cell(r, c);
-            if (cObj && cObj.text !== undefined && cObj.text !== '') {
+            if (cObj && cObj.text !== undefined && cObj.text !== "") {
               const val = Number(cObj.text);
               if (!isNaN(val)) {
                 numericCount++;
@@ -721,10 +732,10 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       });
 
       // Bind cell edited
-      s.on('cell-edited', (text: string, ri: number, ci: number) => {
+      s.on("cell-edited", (text: string, ri: number, ci: number) => {
         const cell = s.cell(ri, ci);
         if (cell) {
-          if (!text.startsWith('=')) {
+          if (!text.startsWith("=")) {
             delete (cell as any).formula;
           } else if (!isFormulaSupportedByGrid(text)) {
             (cell as any).formula = text.slice(1);
@@ -748,7 +759,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
       });
 
       resizeObserver.observe(container);
-      window.addEventListener('resize', handleResize);
+      window.addEventListener("resize", handleResize);
 
       // Edge-detection auto-scroll when dragging selection or autofill handle
       let isDragging = false;
@@ -770,12 +781,17 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
 
       const autoScrollTick = () => {
         if (!isDragging) return;
-        const overlayer = container.querySelector('.x-spreadsheet-overlayer') as HTMLElement | null;
+        const overlayer = container.querySelector(".x-spreadsheet-overlayer") as HTMLElement | null;
         const vs = (s.sheet as any)?.verticalScrollbar;
         const hs = (s.sheet as any)?.horizontalScrollbar;
         let didScroll = false;
 
-        if (scrollSpeedY !== 0 && vs && typeof vs.scroll === 'function' && typeof vs.move === 'function') {
+        if (
+          scrollSpeedY !== 0 &&
+          vs &&
+          typeof vs.scroll === "function" &&
+          typeof vs.move === "function"
+        ) {
           const { top } = vs.scroll();
           const newTop = Math.max(0, top + scrollSpeedY);
           if (newTop !== top) {
@@ -784,7 +800,12 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           }
         }
 
-        if (scrollSpeedX !== 0 && hs && typeof hs.scroll === 'function' && typeof hs.move === 'function') {
+        if (
+          scrollSpeedX !== 0 &&
+          hs &&
+          typeof hs.scroll === "function" &&
+          typeof hs.move === "function"
+        ) {
           const { left } = hs.scroll();
           const newLeft = Math.max(0, left + scrollSpeedX);
           if (newLeft !== left) {
@@ -795,13 +816,13 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
 
         if (didScroll && overlayer) {
           overlayer.dispatchEvent(
-            new MouseEvent('mousemove', {
+            new MouseEvent("mousemove", {
               bubbles: true,
               cancelable: true,
               clientX: lastClientX,
               clientY: lastClientY,
               buttons: 1,
-            })
+            }),
           );
         }
 
@@ -821,7 +842,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         lastClientX = e.clientX;
         lastClientY = e.clientY;
 
-        const overlayer = container.querySelector('.x-spreadsheet-overlayer') as HTMLElement | null;
+        const overlayer = container.querySelector(".x-spreadsheet-overlayer") as HTMLElement | null;
         if (!overlayer) return;
 
         const rect = overlayer.getBoundingClientRect();
@@ -833,7 +854,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           const dist = Math.max(1, e.clientY - (rect.bottom - EDGE_THRESHOLD));
           newSpeedY = Math.min(30, Math.max(5, Math.round(dist * 0.6)));
         } else if (e.clientY < rect.top + EDGE_THRESHOLD) {
-          const dist = Math.max(1, (rect.top + EDGE_THRESHOLD) - e.clientY);
+          const dist = Math.max(1, rect.top + EDGE_THRESHOLD - e.clientY);
           newSpeedY = -Math.min(30, Math.max(5, Math.round(dist * 0.6)));
         }
 
@@ -841,7 +862,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           const dist = Math.max(1, e.clientX - (rect.right - EDGE_THRESHOLD));
           newSpeedX = Math.min(35, Math.max(5, Math.round(dist * 0.6)));
         } else if (e.clientX < rect.left + EDGE_THRESHOLD) {
-          const dist = Math.max(1, (rect.left + EDGE_THRESHOLD) - e.clientX);
+          const dist = Math.max(1, rect.left + EDGE_THRESHOLD - e.clientX);
           newSpeedX = -Math.min(35, Math.max(5, Math.round(dist * 0.6)));
         }
 
@@ -863,10 +884,11 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         if (!target) return;
 
         // Check if drag started on overlayer, autofill handle, or table cell
-        const isCanvasArea = target.closest('.x-spreadsheet-overlayer') ||
-          target.closest('.x-spreadsheet-table') ||
-          target.classList.contains('x-spreadsheet-selector-corner') ||
-          target.closest('.x-spreadsheet-selector');
+        const isCanvasArea =
+          target.closest(".x-spreadsheet-overlayer") ||
+          target.closest(".x-spreadsheet-table") ||
+          target.classList.contains("x-spreadsheet-selector-corner") ||
+          target.closest(".x-spreadsheet-selector");
 
         if (isCanvasArea) {
           isDragging = true;
@@ -882,13 +904,13 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         const target = evt.target as HTMLElement | null;
 
         // 1. Direct hit on colResizer hover or line element
-        if (target?.closest('.x-spreadsheet-resizer.vertical')) {
+        if (target?.closest(".x-spreadsheet-resizer.vertical")) {
           const ci = sheet.colResizer?.cRect?.ci;
-          if (typeof ci === 'number' && ci >= 0) return ci;
+          if (typeof ci === "number" && ci >= 0) return ci;
         }
 
         // 2. Hit on overlayer in the column header row
-        const overlayer = container.querySelector('.x-spreadsheet-overlayer') as HTMLElement | null;
+        const overlayer = container.querySelector(".x-spreadsheet-overlayer") as HTMLElement | null;
         if (overlayer && (target === overlayer || overlayer.contains(target))) {
           const rect = overlayer.getBoundingClientRect();
           const offsetX = evt.clientX - rect.left;
@@ -945,7 +967,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         if (duration > 400 || dist > 4) return;
 
         const now = Date.now();
-        const isDoubleClick = (now - lastBorderClickTime < 450) && (lastBorderClickCol === colIndex);
+        const isDoubleClick = now - lastBorderClickTime < 450 && lastBorderClickCol === colIndex;
 
         lastBorderClickTime = now;
         lastBorderClickCol = colIndex;
@@ -971,24 +993,24 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         }
       };
 
-      container.addEventListener('mousedown', handleBorderMouseDown, true);
-      window.addEventListener('mouseup', handleBorderMouseUp, true);
-      container.addEventListener('dblclick', handleBorderDblClick, true);
+      container.addEventListener("mousedown", handleBorderMouseDown, true);
+      window.addEventListener("mouseup", handleBorderMouseUp, true);
+      container.addEventListener("dblclick", handleBorderDblClick, true);
 
-      container.addEventListener('mousedown', handleContainerMouseDown);
-      window.addEventListener('mousemove', handleWindowMouseMove);
-      window.addEventListener('mouseup', handleWindowMouseUp);
+      container.addEventListener("mousedown", handleContainerMouseDown);
+      window.addEventListener("mousemove", handleWindowMouseMove);
+      window.addEventListener("mouseup", handleWindowMouseUp);
 
       // Formula Reference Point-and-Click Interception
       const handleFormulaCaptureMouseDown = (e: MouseEvent) => {
         if (e.button !== 0) return;
-        if (document.querySelector('dialog[open]')) return;
+        if (document.querySelector("dialog[open]")) return;
 
         const sheet = (s as any).sheet;
         if (!sheet?.data || !sheet?.editor) return;
 
-        const editorEl = container.querySelector('.x-spreadsheet-editor') as HTMLElement | null;
-        const isEditorVisible = editorEl && editorEl.style.display !== 'none';
+        const editorEl = container.querySelector(".x-spreadsheet-editor") as HTMLElement | null;
+        const isEditorVisible = editorEl && editorEl.style.display !== "none";
 
         // Allow clicking inside editor textarea itself for cursor placement / selection
         if (editorEl && editorEl.contains(e.target as Node)) {
@@ -997,14 +1019,19 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
 
         // Allow clicking toolbar, bottombar, scrollbars, and resizers
         const target = e.target as HTMLElement | null;
-        if (target?.closest('.x-spreadsheet-toolbar, .x-spreadsheet-bottombar, .x-spreadsheet-scrollbar, .x-spreadsheet-resizer')) {
+        if (
+          target?.closest(
+            ".x-spreadsheet-toolbar, .x-spreadsheet-bottombar, .x-spreadsheet-scrollbar, .x-spreadsheet-resizer",
+          )
+        ) {
           return;
         }
 
         const session = formulaRefSessionRef.current;
-        const currentText = sheet.editor.inputText || '';
+        const currentText = sheet.editor.inputText || "";
 
-        const isEditingFormula = (isEditorVisible && currentText.startsWith('=')) || session.isActive;
+        const isEditingFormula =
+          (isEditorVisible && currentText.startsWith("=")) || session.isActive;
         if (!isEditingFormula) {
           return;
         }
@@ -1015,7 +1042,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           return;
         }
 
-        const overlayer = container.querySelector('.x-spreadsheet-overlayer') as HTMLElement | null;
+        const overlayer = container.querySelector(".x-spreadsheet-overlayer") as HTMLElement | null;
         if (!overlayer) return;
 
         const rect = overlayer.getBoundingClientRect();
@@ -1053,9 +1080,10 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
             eci: session.targetC,
           });
           const tOffset = sheet.getTableOffset();
-          const sPosition = sOffset.top > tOffset.height / 2 ? 'bottom' : 'top';
+          const sPosition = sOffset.top > tOffset.height / 2 ? "bottom" : "top";
           sheet.editor.setOffset(sOffset, sPosition);
-          const cell = sheet.data.getCell(session.targetR, session.targetC) || sheet.data.getSelectedCell();
+          const cell =
+            sheet.data.getCell(session.targetR, session.targetC) || sheet.data.getSelectedCell();
           sheet.editor.setCell(cell, sheet.data.getSelectedValidator());
         }
 
@@ -1067,15 +1095,19 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
 
         // Shift+Click range extension: if user previously selected a reference and now shift-clicks
         if (e.shiftKey && session.hasActiveToken && session.refRange) {
-          const anchor = session.dragAnchor || { ri: session.refRange.sri, ci: session.refRange.sci };
+          const anchor = session.dragAnchor || {
+            ri: session.refRange.sri,
+            ci: session.refRange.sci,
+          };
           const curSri = Math.min(anchor.ri, sri);
           const curSci = Math.min(anchor.ci, sci);
           const curEri = Math.max(anchor.ri, eri);
           const curEci = Math.max(anchor.ci, eci);
 
-          const rangeCoord = (curSri === curEri && curSci === curEci)
-            ? XLSX.utils.encode_cell({ r: curSri, c: curSci })
-            : `${XLSX.utils.encode_cell({ r: curSri, c: curSci })}:${XLSX.utils.encode_cell({ r: curEri, c: curEci })}`;
+          const rangeCoord =
+            curSri === curEri && curSci === curEci
+              ? XLSX.utils.encode_cell({ r: curSri, c: curSci })
+              : `${XLSX.utils.encode_cell({ r: curSri, c: curSci })}:${XLSX.utils.encode_cell({ r: curEri, c: curEci })}`;
 
           const updatedFormula = session.baseText + rangeCoord;
           sheet.editor.setText(updatedFormula);
@@ -1084,7 +1116,12 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           updateRefHighlight(session.refRange);
 
           const targetCoord = XLSX.utils.encode_cell({ r: session.targetR, c: session.targetC });
-          onActiveCellChangeRef.current(targetCoord, updatedFormula, session.targetR, session.targetC);
+          onActiveCellChangeRef.current(
+            targetCoord,
+            updatedFormula,
+            session.targetR,
+            session.targetC,
+          );
           return;
         }
 
@@ -1092,9 +1129,10 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           session.baseText = currentText;
         }
 
-        const refCoord = (sri === eri && sci === eci)
-          ? XLSX.utils.encode_cell({ r: sri, c: sci })
-          : `${XLSX.utils.encode_cell({ r: sri, c: sci })}:${XLSX.utils.encode_cell({ r: eri, c: eci })}`;
+        const refCoord =
+          sri === eri && sci === eci
+            ? XLSX.utils.encode_cell({ r: sri, c: sci })
+            : `${XLSX.utils.encode_cell({ r: sri, c: sci })}:${XLSX.utils.encode_cell({ r: eri, c: eci })}`;
 
         const newFormula = session.baseText + refCoord;
         sheet.editor.setText(newFormula);
@@ -1127,9 +1165,10 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           const curEri = Math.max(anchor.ri, curCellRect.ri);
           const curEci = Math.max(anchor.ci, curCellRect.ci);
 
-          const rangeCoord = (curSri === curEri && curSci === curEci)
-            ? XLSX.utils.encode_cell({ r: curSri, c: curSci })
-            : `${XLSX.utils.encode_cell({ r: curSri, c: curSci })}:${XLSX.utils.encode_cell({ r: curEri, c: curEci })}`;
+          const rangeCoord =
+            curSri === curEri && curSci === curEci
+              ? XLSX.utils.encode_cell({ r: curSri, c: curSci })
+              : `${XLSX.utils.encode_cell({ r: curSri, c: curSci })}:${XLSX.utils.encode_cell({ r: curEri, c: curEci })}`;
 
           const updatedFormula = session.baseText + rangeCoord;
           sheet.editor.setText(updatedFormula);
@@ -1137,39 +1176,44 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
           session.refRange = { sri: curSri, sci: curSci, eri: curEri, eci: curEci };
           updateRefHighlight(session.refRange);
 
-          onActiveCellChangeRef.current(targetCoord, updatedFormula, session.targetR, session.targetC);
+          onActiveCellChangeRef.current(
+            targetCoord,
+            updatedFormula,
+            session.targetR,
+            session.targetC,
+          );
         };
 
         const handleDragMouseUp = () => {
           session.isDraggingRange = false;
-          window.removeEventListener('mousemove', handleDragMouseMove, true);
-          window.removeEventListener('mouseup', handleDragMouseUp, true);
+          window.removeEventListener("mousemove", handleDragMouseMove, true);
+          window.removeEventListener("mouseup", handleDragMouseUp, true);
 
           if (sheet.editor?.textEl?.el) {
             sheet.editor.textEl.el.focus();
           }
         };
 
-        window.addEventListener('mousemove', handleDragMouseMove, true);
-        window.addEventListener('mouseup', handleDragMouseUp, true);
+        window.addEventListener("mousemove", handleDragMouseMove, true);
+        window.addEventListener("mouseup", handleDragMouseUp, true);
       };
 
       const handleFormulaKeyDownCapture = (e: KeyboardEvent) => {
         if (e.isComposing) return;
-        if (document.querySelector('dialog[open]')) return;
+        if (document.querySelector("dialog[open]")) return;
 
         const sheet = (s as any).sheet;
         const ed = sheet?.editor;
-        const editorEl = container.querySelector('.x-spreadsheet-editor') as HTMLElement | null;
-        const isEditing = editorEl && editorEl.style.display !== 'none';
+        const editorEl = container.querySelector(".x-spreadsheet-editor") as HTMLElement | null;
+        const isEditing = editorEl && editorEl.style.display !== "none";
 
         if (!isEditing || !ed) return;
 
-        const currentText = ed.inputText || '';
+        const currentText = ed.inputText || "";
         const session = formulaRefSessionRef.current;
 
-        if ((e.key === 'Enter' || e.key === 'Tab') && !e.ctrlKey && !e.altKey && !e.metaKey) {
-          if (currentText.startsWith('=')) {
+        if ((e.key === "Enter" || e.key === "Tab") && !e.ctrlKey && !e.altKey && !e.metaKey) {
+          if (currentText.startsWith("=")) {
             const closed = autoCloseParentheses(currentText);
             if (closed !== currentText) {
               ed.setText(closed);
@@ -1179,7 +1223,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
             session.hasActiveToken = false;
             session.refRange = null;
           }
-        } else if (e.key === 'Escape') {
+        } else if (e.key === "Escape") {
           e.preventDefault();
           e.stopPropagation();
           hideRefHighlight();
@@ -1192,17 +1236,24 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         }
       };
 
-      container.addEventListener('mousedown', handleFormulaCaptureMouseDown, true);
-      window.addEventListener('keydown', handleFormulaKeyDownCapture, true);
+      container.addEventListener("mousedown", handleFormulaCaptureMouseDown, true);
+      window.addEventListener("keydown", handleFormulaKeyDownCapture, true);
 
       // Instant cell editing when Enter is pressed on a selected cell
       const handleGridKeyDown = (e: KeyboardEvent) => {
-        if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || e.isComposing) {
+        if (
+          e.key !== "Enter" ||
+          e.shiftKey ||
+          e.ctrlKey ||
+          e.altKey ||
+          e.metaKey ||
+          e.isComposing
+        ) {
           return;
         }
 
         // Do not intercept if any modal dialog is currently open
-        if (document.querySelector('dialog[open]')) return;
+        if (document.querySelector("dialog[open]")) return;
 
         const activeEl = document.activeElement;
         const sheet = (s as any).sheet;
@@ -1210,13 +1261,13 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         if (!isInsideGrid && !sheet?.focusing) return;
 
         // If focus is on an input or textarea outside the grid (e.g. FormulaBar, Header filename), do not intercept
-        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+        if (activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA")) {
           if (!container.contains(activeEl)) return;
         }
 
         // Check if cell editor is already visible/active
-        const editorEl = container.querySelector('.x-spreadsheet-editor') as HTMLElement | null;
-        const isEditing = editorEl && editorEl.style.display !== 'none';
+        const editorEl = container.querySelector(".x-spreadsheet-editor") as HTMLElement | null;
+        const isEditing = editorEl && editorEl.style.display !== "none";
 
         // If user is already editing the cell, allow Enter to commit and advance down
         if (isEditing) return;
@@ -1226,7 +1277,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         e.stopPropagation();
 
         if (sheet && sheet.editor && sheet.data) {
-          if (sheet.data.settings?.mode === 'read') return;
+          if (sheet.data.settings?.mode === "read") return;
           const { ri, ci } = sheet.data.selector;
           const merge = sheet.data.merges?.getFirstIncludes?.(ri, ci);
           const targetR = merge ? merge.sri : ri;
@@ -1240,7 +1291,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
 
           const sOffset = sheet.data.getSelectedRect();
           const tOffset = sheet.getTableOffset();
-          const sPosition = sOffset.top > tOffset.height / 2 ? 'bottom' : 'top';
+          const sPosition = sOffset.top > tOffset.height / 2 ? "bottom" : "top";
           sheet.editor.setOffset(sOffset, sPosition);
           const cell = sheet.data.getCell(targetR, targetC) || sheet.data.getSelectedCell();
           sheet.editor.setCell(cell, sheet.data.getSelectedValidator());
@@ -1248,28 +1299,28 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         }
       };
 
-      window.addEventListener('keydown', handleGridKeyDown, true);
+      window.addEventListener("keydown", handleGridKeyDown, true);
 
       return () => {
         cancelled = true;
         stopAutoScroll();
-        window.removeEventListener('keydown', handleFormulaKeyDownCapture, true);
-        container.removeEventListener('mousedown', handleFormulaCaptureMouseDown, true);
-        editor?.textEl?.el?.removeEventListener('input', handleEditorTextareaInput);
+        window.removeEventListener("keydown", handleFormulaKeyDownCapture, true);
+        container.removeEventListener("mousedown", handleFormulaCaptureMouseDown, true);
+        editor?.textEl?.el?.removeEventListener("input", handleEditorTextareaInput);
         if (refHighlightEl.parentNode) {
           refHighlightEl.parentNode.removeChild(refHighlightEl);
         }
-        window.removeEventListener('keydown', handleGridKeyDown, true);
-        container.removeEventListener('mousedown', handleBorderMouseDown, true);
-        window.removeEventListener('mouseup', handleBorderMouseUp, true);
-        container.removeEventListener('dblclick', handleBorderDblClick, true);
-        container.removeEventListener('mousedown', handleContainerMouseDown);
-        window.removeEventListener('mousemove', handleWindowMouseMove);
-        window.removeEventListener('mouseup', handleWindowMouseUp);
+        window.removeEventListener("keydown", handleGridKeyDown, true);
+        container.removeEventListener("mousedown", handleBorderMouseDown, true);
+        window.removeEventListener("mouseup", handleBorderMouseUp, true);
+        container.removeEventListener("dblclick", handleBorderDblClick, true);
+        container.removeEventListener("mousedown", handleContainerMouseDown);
+        window.removeEventListener("mousemove", handleWindowMouseMove);
+        window.removeEventListener("mouseup", handleWindowMouseUp);
         resizeObserver.disconnect();
-        window.removeEventListener('resize', handleResize);
+        window.removeEventListener("resize", handleResize);
         if (container) {
-          container.innerHTML = '';
+          container.innerHTML = "";
         }
         spreadsheetInstanceRef.current = null;
       };
@@ -1282,7 +1333,7 @@ export const SpreadsheetGrid = forwardRef<SpreadsheetGridRef, SpreadsheetGridPro
         style={{ minHeight: 0 }}
       />
     );
-  }
+  },
 );
 
-SpreadsheetGrid.displayName = 'SpreadsheetGrid';
+SpreadsheetGrid.displayName = "SpreadsheetGrid";

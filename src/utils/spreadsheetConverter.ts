@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import * as XLSX from "xlsx";
 
 export interface XSpreadsheetCell {
   text?: string | number | boolean;
@@ -43,14 +43,14 @@ export type XSpreadsheetData = XSpreadsheetSheet[];
  * to avoid canvas rendering crashes.
  */
 const GRID_SUPPORTED_FORMULAS = new Set([
-  'SUM',
-  'AVERAGE',
-  'MAX',
-  'MIN',
-  'IF',
-  'AND',
-  'OR',
-  'CONCAT',
+  "SUM",
+  "AVERAGE",
+  "MAX",
+  "MIN",
+  "IF",
+  "AND",
+  "OR",
+  "CONCAT",
 ]);
 
 /**
@@ -62,22 +62,22 @@ const GRID_SUPPORTED_FORMULAS = new Set([
  * are safely rendered using cached precalculated values to prevent canvas tokenizer crashes.
  */
 export function isFormulaSupportedByGrid(formula: string): boolean {
-  if (!formula || typeof formula !== 'string') return true;
+  if (!formula || typeof formula !== "string") return true;
 
   let expr = formula.trim();
-  if (expr.startsWith('=')) {
+  if (expr.startsWith("=")) {
     expr = expr.slice(1).trim();
   }
   if (!expr) return true;
 
   // 1. Cannot contain '$' (absolute coordinates cause token splitting and NaN/crashes in x-data-spreadsheet)
-  if (expr.includes('$')) return false;
+  if (expr.includes("$")) return false;
 
   // 2. Cannot contain '!' (cross-sheet references not supported by x-data-spreadsheet engine)
-  if (expr.includes('!')) return false;
+  if (expr.includes("!")) return false;
 
   // 3. Cannot contain array formula brackets
-  if (expr.startsWith('{') || expr.endsWith('}')) return false;
+  if (expr.startsWith("{") || expr.endsWith("}")) return false;
 
   // 4. Match all function calls
   const fnMatches = Array.from(expr.matchAll(/([A-Za-z0-9_.]+)\s*\(/g));
@@ -94,12 +94,12 @@ export function isFormulaSupportedByGrid(formula: string): boolean {
     if (!GRID_SUPPORTED_FORMULAS.has(fnName)) {
       return false;
     }
-    const openIdx = expr.indexOf('(');
-    const closeIdx = expr.lastIndexOf(')');
+    const openIdx = expr.indexOf("(");
+    const closeIdx = expr.lastIndexOf(")");
     if (openIdx === -1 || closeIdx === -1 || closeIdx <= openIdx) return false;
     const parenContent = expr.substring(openIdx + 1, closeIdx);
     // Disallow nested parens inside function arguments
-    if (parenContent.includes('(') || parenContent.includes(')')) {
+    if (parenContent.includes("(") || parenContent.includes(")")) {
       return false;
     }
   }
@@ -107,7 +107,7 @@ export function isFormulaSupportedByGrid(formula: string): boolean {
   // If there are NO function calls (e.g. arithmetic expressions like A1+B1, A1*10):
   if (fnMatches.length === 0) {
     // Cannot contain ranges (colon)
-    if (expr.includes(':')) return false;
+    if (expr.includes(":")) return false;
     // Check characters: only allow standard coordinates, numbers, math operators (+, -, *, /), parens, dots, spaces
     if (!/^[A-Za-z0-9_.\s+\-*/()]+$/.test(expr)) {
       return false;
@@ -123,20 +123,20 @@ export function isFormulaSupportedByGrid(formula: string): boolean {
  * Example: "=SUM(A1:A5" -> "=SUM(A1:A5)"
  */
 export function autoCloseParentheses(text: string): string {
-  if (!text || !text.startsWith('=')) return text;
+  if (!text || !text.startsWith("=")) return text;
   let openCount = 0;
   let inString = false;
   for (let i = 1; i < text.length; i++) {
     const ch = text[i];
-    if (ch === '"' && text[i - 1] !== '\\') {
+    if (ch === '"' && text[i - 1] !== "\\") {
       inString = !inString;
     } else if (!inString) {
-      if (ch === '(') openCount++;
-      else if (ch === ')') openCount = Math.max(0, openCount - 1);
+      if (ch === "(") openCount++;
+      else if (ch === ")") openCount = Math.max(0, openCount - 1);
     }
   }
   if (openCount > 0) {
-    return text + ')'.repeat(openCount);
+    return text + ")".repeat(openCount);
   }
   return text;
 }
@@ -151,11 +151,11 @@ export function autoCloseParentheses(text: string): string {
  * - "=SUM(A1:A5)" -> false
  */
 export function isFormulaAwaitingOperand(formula: string): boolean {
-  if (!formula || typeof formula !== 'string' || !formula.startsWith('=')) return false;
+  if (!formula || typeof formula !== "string" || !formula.startsWith("=")) return false;
   const trimmed = formula.trimEnd();
-  if (trimmed === '=') return true;
+  if (trimmed === "=") return true;
   const lastChar = trimmed[trimmed.length - 1];
-  return ['(', ',', ':', '+', '-', '*', '/', '^', '&', '=', '<', '>'].includes(lastChar);
+  return ["(", ",", ":", "+", "-", "*", "/", "^", "&", "=", "<", ">"].includes(lastChar);
 }
 
 /**
@@ -183,7 +183,7 @@ export function normalizeSpreadsheetData(data: XSpreadsheetData): XSpreadsheetDa
               XLSX.utils.encode_range({
                 s: { r, c },
                 e: { r: r + rn, c: c + cn },
-              })
+              }),
             );
           }
         }
@@ -195,7 +195,10 @@ export function normalizeSpreadsheetData(data: XSpreadsheetData): XSpreadsheetDa
     merges.forEach((mergeRef) => {
       try {
         const range = XLSX.utils.decode_range(mergeRef);
-        const { s: { r: sri, c: sci }, e: { r: eri, c: eci } } = range;
+        const {
+          s: { r: sri, c: sci },
+          e: { r: eri, c: eci },
+        } = range;
         const rn = eri - sri;
         const cn = eci - sci;
 
@@ -206,7 +209,7 @@ export function normalizeSpreadsheetData(data: XSpreadsheetData): XSpreadsheetDa
             rows[sri] = { ...rows[sri], cells: { ...(rows[sri].cells || {}) } };
           }
           if (!rows[sri].cells[sci]) {
-            rows[sri].cells[sci] = { text: '' };
+            rows[sri].cells[sci] = { text: "" };
           }
           rows[sri].cells[sci] = {
             ...rows[sri].cells[sci],
@@ -244,7 +247,7 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
   const out: XSpreadsheetData = [];
 
   if (!wb || !wb.SheetNames || wb.SheetNames.length === 0) {
-    return [createEmptySheet('Sheet1')];
+    return [createEmptySheet("Sheet1")];
   }
 
   wb.SheetNames.forEach((name) => {
@@ -260,7 +263,7 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
     };
 
     // If no ref, sheet is empty
-    if (!ws['!ref']) {
+    if (!ws["!ref"]) {
       out.push(sheet);
       return;
     }
@@ -268,7 +271,7 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
     // Safely decode range or default
     let range: XLSX.Range;
     try {
-      range = XLSX.utils.decode_range(ws['!ref']);
+      range = XLSX.utils.decode_range(ws["!ref"]);
     } catch {
       range = { s: { r: 0, c: 0 }, e: { r: 0, c: 0 } };
     }
@@ -308,8 +311,8 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
 
     // Handle column widths (prune beyond used range to avoid Excel 16,384 column bloat)
     const maxColIdx = Math.max(effectiveMaxC + 20, 100);
-    if (ws['!cols'] && Array.isArray(ws['!cols'])) {
-      ws['!cols'].forEach((col, cIdx) => {
+    if (ws["!cols"] && Array.isArray(ws["!cols"])) {
+      ws["!cols"].forEach((col, cIdx) => {
         if (!col || cIdx > maxColIdx) return;
         if (!sheet.cols) sheet.cols = {};
         const width = col.wpx || (col.wch ? Math.round(col.wch * 8.5) : undefined);
@@ -321,8 +324,8 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
 
     // Handle row heights
     const maxRowIdx = Math.max(effectiveMaxR + 20, 100);
-    if (ws['!rows'] && Array.isArray(ws['!rows'])) {
-      ws['!rows'].forEach((row, rIdx) => {
+    if (ws["!rows"] && Array.isArray(ws["!rows"])) {
+      ws["!rows"].forEach((row, rIdx) => {
         if (!row || rIdx > maxRowIdx) return;
         const height = row.hpx || (row.hpt ? Math.round(row.hpt * 1.33) : undefined);
         if (height) {
@@ -335,9 +338,9 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
     }
 
     // Handle merged cells
-    if (ws['!merges'] && Array.isArray(ws['!merges'])) {
-      ws['!merges'].forEach((m) => {
-        const mergeStr = typeof m === 'string' ? m : XLSX.utils.encode_range(m);
+    if (ws["!merges"] && Array.isArray(ws["!merges"])) {
+      ws["!merges"].forEach((m) => {
+        const mergeStr = typeof m === "string" ? m : XLSX.utils.encode_range(m);
         if (!sheet.merges) sheet.merges = [];
         sheet.merges.push(mergeStr);
       });
@@ -354,13 +357,13 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
 
         if (cell !== undefined && cell !== null) {
           rowHasCells = true;
-          let cellText = '';
+          let cellText = "";
           let cellFormula: string | undefined;
 
           // Check for formula
           if (cell.f) {
             if (isFormulaSupportedByGrid(cell.f)) {
-              cellText = '=' + cell.f;
+              cellText = "=" + cell.f;
             } else {
               // Formula unsupported or complex for x-data-spreadsheet engine
               // Render cached calculated value to prevent canvas rendering crashes
@@ -370,7 +373,7 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
               } else if (cell.v !== undefined) {
                 cellText = String(cell.v);
               } else {
-                cellText = '';
+                cellText = "";
               }
             }
           } else if (cell.w !== undefined) {
@@ -404,7 +407,7 @@ export function workbookToXSpreadsheet(wb: XLSX.WorkBook): XSpreadsheetData {
     out.push(sheet);
   });
 
-  return normalizeSpreadsheetData(out.length > 0 ? out : [createEmptySheet('Sheet1')]);
+  return normalizeSpreadsheetData(out.length > 0 ? out : [createEmptySheet("Sheet1")]);
 }
 
 /**
@@ -416,7 +419,7 @@ export function xSpreadsheetToWorkbook(sdata: XSpreadsheetData): XLSX.WorkBook {
 
   if (!normalizedData || !Array.isArray(normalizedData) || normalizedData.length === 0) {
     const ws = XLSX.utils.aoa_to_sheet([[]]);
-    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
     return wb;
   }
 
@@ -442,7 +445,7 @@ export function xSpreadsheetToWorkbook(sdata: XSpreadsheetData): XLSX.WorkBook {
 
       colKeys.forEach((c) => {
         const cell = row.cells[c];
-        if (!cell || cell.text === undefined || cell.text === null || cell.text === '') {
+        if (!cell || cell.text === undefined || cell.text === null || cell.text === "") {
           return;
         }
 
@@ -462,59 +465,57 @@ export function xSpreadsheetToWorkbook(sdata: XSpreadsheetData): XLSX.WorkBook {
           if (c > maxC) maxC = c;
         }
 
-        const hasDirectFormula = textStr.startsWith('=');
-        const formulaToExport = hasDirectFormula
-          ? textStr.slice(1)
-          : (cell.formula || undefined);
+        const hasDirectFormula = textStr.startsWith("=");
+        const formulaToExport = hasDirectFormula ? textStr.slice(1) : cell.formula || undefined;
 
         // Formula export
         if (formulaToExport) {
           const formula = formulaToExport;
-          if (cell.value !== undefined && cell.value !== null && cell.value !== '') {
-            if (typeof cell.value === 'boolean') {
+          if (cell.value !== undefined && cell.value !== null && cell.value !== "") {
+            if (typeof cell.value === "boolean") {
               ws[cellRef] = {
-                t: 'b',
+                t: "b",
                 f: formula,
                 v: cell.value,
               };
-            } else if (typeof cell.value === 'number') {
+            } else if (typeof cell.value === "number") {
               ws[cellRef] = {
-                t: 'n',
+                t: "n",
                 f: formula,
                 v: cell.value,
               };
-            } else if (typeof cell.value === 'string') {
+            } else if (typeof cell.value === "string") {
               ws[cellRef] = {
-                t: 's',
+                t: "s",
                 f: formula,
                 v: cell.value,
               };
             } else {
               const num = Number(cell.value);
               ws[cellRef] = isNaN(num)
-                ? { t: 's', f: formula, v: String(cell.value) }
-                : { t: 'n', f: formula, v: num };
+                ? { t: "s", f: formula, v: String(cell.value) }
+                : { t: "n", f: formula, v: num };
             }
           } else {
             ws[cellRef] = {
-              t: 'n',
+              t: "n",
               f: formula,
               v: 0,
             };
           }
-        } else if (!isNaN(Number(textStr)) && textStr !== '') {
+        } else if (!isNaN(Number(textStr)) && textStr !== "") {
           ws[cellRef] = {
-            t: 'n',
+            t: "n",
             v: Number(textStr),
           };
-        } else if (textStr.toLowerCase() === 'true' || textStr.toLowerCase() === 'false') {
+        } else if (textStr.toLowerCase() === "true" || textStr.toLowerCase() === "false") {
           ws[cellRef] = {
-            t: 'b',
-            v: textStr.toLowerCase() === 'true',
+            t: "b",
+            v: textStr.toLowerCase() === "true",
           };
         } else {
           ws[cellRef] = {
-            t: 's',
+            t: "s",
             v: String(cell.text),
           };
         }
@@ -523,7 +524,7 @@ export function xSpreadsheetToWorkbook(sdata: XSpreadsheetData): XLSX.WorkBook {
 
     // Merges
     if (sheet.merges && Array.isArray(sheet.merges) && sheet.merges.length > 0) {
-      ws['!merges'] = sheet.merges.map((m) => XLSX.utils.decode_range(m));
+      ws["!merges"] = sheet.merges.map((m) => XLSX.utils.decode_range(m));
     }
 
     // Column widths
@@ -542,18 +543,18 @@ export function xSpreadsheetToWorkbook(sdata: XSpreadsheetData): XLSX.WorkBook {
       });
 
       if (colArr.length > 0) {
-        ws['!cols'] = colArr;
+        ws["!cols"] = colArr;
       }
     }
 
     // Set Sheet bounds
     if (hasCells) {
-      ws['!ref'] = XLSX.utils.encode_range({
+      ws["!ref"] = XLSX.utils.encode_range({
         s: { r: minR, c: minC },
         e: { r: maxR, c: maxC },
       });
     } else {
-      ws['!ref'] = 'A1:A1';
+      ws["!ref"] = "A1:A1";
     }
 
     const sheetName = sheet.name || `Sheet${sheetIdx + 1}`;
@@ -566,10 +567,10 @@ export function xSpreadsheetToWorkbook(sdata: XSpreadsheetData): XLSX.WorkBook {
 /**
  * Creates an empty default sheet data structure
  */
-export function createEmptySheet(name = 'Sheet1'): XSpreadsheetSheet {
+export function createEmptySheet(name = "Sheet1"): XSpreadsheetSheet {
   return {
     name,
-    freeze: 'A1',
+    freeze: "A1",
     styles: [],
     merges: [],
     rows: {
@@ -587,7 +588,7 @@ export function createEmptySheet(name = 'Sheet1'): XSpreadsheetSheet {
 export async function readSpreadsheetFile(file: File | Blob): Promise<XLSX.WorkBook> {
   const arrayBuffer = await file.arrayBuffer();
   return XLSX.read(arrayBuffer, {
-    type: 'array',
+    type: "array",
     cellFormula: true,
     cellStyles: true,
     cellNF: true,
@@ -600,11 +601,11 @@ export async function readSpreadsheetFile(file: File | Blob): Promise<XLSX.WorkB
  */
 export function workbookToXlsxBlob(wb: XLSX.WorkBook): Blob {
   const wbout = XLSX.write(wb, {
-    bookType: 'xlsx',
-    type: 'array',
+    bookType: "xlsx",
+    type: "array",
   });
   return new Blob([wbout], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
 }
 
@@ -615,10 +616,10 @@ export function workbookToCsvBlob(wb: XLSX.WorkBook, sheetName?: string): Blob {
   const targetSheetName = sheetName && wb.Sheets[sheetName] ? sheetName : wb.SheetNames[0];
   const ws = wb.Sheets[targetSheetName];
   if (!ws) {
-    return new Blob([''], { type: 'text/csv;charset=utf-8;' });
+    return new Blob([""], { type: "text/csv;charset=utf-8;" });
   }
   const csv = XLSX.utils.sheet_to_csv(ws);
-  return new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  return new Blob([csv], { type: "text/csv;charset=utf-8;" });
 }
 
 /**
@@ -627,14 +628,14 @@ export function workbookToCsvBlob(wb: XLSX.WorkBook, sheetName?: string): Blob {
 export function workbookToJsonBlob(wb: XLSX.WorkBook, sheetName?: string): Blob {
   if (sheetName && wb.Sheets[sheetName]) {
     const json = XLSX.utils.sheet_to_json(wb.Sheets[sheetName]);
-    return new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+    return new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
   }
 
   const allData: Record<string, any[]> = {};
   wb.SheetNames.forEach((name) => {
     allData[name] = XLSX.utils.sheet_to_json(wb.Sheets[name]);
   });
-  return new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+  return new Blob([JSON.stringify(allData, null, 2)], { type: "application/json" });
 }
 
 /**
@@ -644,7 +645,7 @@ export function workbookToHtmlBlob(wb: XLSX.WorkBook, sheetName?: string): Blob 
   const targetSheetName = sheetName && wb.Sheets[sheetName] ? sheetName : wb.SheetNames[0];
   const ws = wb.Sheets[targetSheetName];
   if (!ws) {
-    return new Blob(['<table></table>'], { type: 'text/html;charset=utf-8;' });
+    return new Blob(["<table></table>"], { type: "text/html;charset=utf-8;" });
   }
   const html = `<!DOCTYPE html>
 <html>
@@ -664,7 +665,7 @@ export function workbookToHtmlBlob(wb: XLSX.WorkBook, sheetName?: string): Blob 
   ${XLSX.utils.sheet_to_html(ws)}
 </body>
 </html>`;
-  return new Blob([html], { type: 'text/html;charset=utf-8;' });
+  return new Blob([html], { type: "text/html;charset=utf-8;" });
 }
 
 /**
@@ -672,7 +673,7 @@ export function workbookToHtmlBlob(wb: XLSX.WorkBook, sheetName?: string): Blob 
  */
 export function triggerBlobDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   document.body.appendChild(a);

@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import React, { useEffect, useRef } from "react";
+import { AlertTriangle, X } from "lucide-react";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -15,7 +15,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isOpen,
   title,
   description,
-  confirmLabel = 'Confirm',
+  confirmLabel = "Confirm",
   isDestructive = true,
   onConfirm,
   onCancel,
@@ -50,9 +50,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       <div className="bg-white rounded-xl shadow-2xl w-[90vw] max-w-md overflow-hidden border border-slate-200">
         <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
           <div className="flex items-center gap-2">
-            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-              isDestructive ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
-            }`}>
+            <div
+              className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                isDestructive ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"
+              }`}
+            >
               <AlertTriangle className="w-4 h-4" />
             </div>
             <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
@@ -89,9 +91,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               onCancel();
             }}
             className={`px-3.5 py-1.5 font-medium text-white rounded-lg shadow-xs transition-colors cursor-pointer ${
-              isDestructive
-                ? 'bg-red-600 hover:bg-red-700'
-                : 'bg-blue-600 hover:bg-blue-700'
+              isDestructive ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             {confirmLabel}
