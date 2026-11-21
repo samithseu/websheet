@@ -5,8 +5,10 @@ allowBuilds:
   core-js: true
   x-data-spreadsheet: true
 catalog:
-  vite: npm:@voidzero-dev/vite-plus-core@1.2.0
-  vite-plus: 1.2.0
+  vite: npm:@voidzero-dev/vite-plus-core@8.3.8000
+  vite-plus: 1.7.0
+minimumReleaseAgeExclude:
+  - lucide-react@1.77.0
 overrides:
   vite@*: "catalog:"
 peerDependencyRules:
