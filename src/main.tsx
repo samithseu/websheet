@@ -12,3 +12,13 @@ createRoot(document.getElementById("root")!).render(
     </ErrorBoundary>
   </StrictMode>,
 );
+
+// Warm pages-cache on initial load for offline resilience
+if ("caches" in window && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    caches
+      .open("pages-cache")
+      .then((cache) => cache.add(window.location.href))
+      .catch(() => {});
+  });
+}

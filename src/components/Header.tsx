@@ -22,6 +22,7 @@ import {
   ArrowDownToLine,
 } from "lucide-react";
 import { SAMPLE_TEMPLATES } from "../utils/sampleData";
+import { GithubIcon } from "./icons/GithubIcon";
 
 interface HeaderProps {
   filename: string;
@@ -137,7 +138,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="no-print bg-white border-b border-slate-200 select-none shrink-0 z-30">
       {/* Top Application Bar */}
       <div className="h-12 px-4 flex items-center justify-between gap-4 border-b border-slate-100">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {/* Brand Icon & Name with Home Navigation */}
           <button
             type="button"
@@ -200,7 +201,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Right action controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Chromium PWA Install Button */}
           {deferredInstallPrompt && (
             <button
@@ -265,6 +266,18 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <HelpCircle className="w-4 h-4" />
           </button>
+
+          {/* GitHub Repository Link */}
+          <a
+            href="https://github.com/samithseu/websheet"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
+            title="View source on GitHub"
+            aria-label="GitHub repository"
+          >
+            <GithubIcon className="w-4 h-4" />
+          </a>
         </div>
       </div>
 

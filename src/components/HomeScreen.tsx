@@ -14,6 +14,7 @@ import {
   Upload,
 } from "lucide-react";
 import { SAMPLE_TEMPLATES } from "../utils/sampleData";
+import { GithubIcon } from "./icons/GithubIcon";
 
 export interface HomeScreenProps {
   onNewSpreadsheet: () => void;
@@ -121,6 +122,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           >
             <HelpCircle className="w-4 h-4" />
           </button>
+
+          <a
+            href="https://github.com/samithseu/websheet"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
+            title="View source on GitHub"
+            aria-label="GitHub repository"
+          >
+            <GithubIcon className="w-4 h-4" />
+          </a>
         </div>
       </header>
 
