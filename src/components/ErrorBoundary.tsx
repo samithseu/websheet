@@ -45,51 +45,53 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   public override render(): ReactNode {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-slate-100 p-4 font-sans text-slate-800">
-          <div className="max-w-lg w-full bg-white rounded-xl shadow-lg border border-slate-200 p-6 flex flex-col gap-4">
-            <div className="flex items-center gap-3 text-red-600">
-              <div className="p-2 bg-red-50 rounded-lg shrink-0">
-                <AlertTriangle className="w-6 h-6" />
+        <div className="min-h-screen w-full flex items-center justify-center bg-zinc-50 p-4 font-sans text-zinc-900">
+          <div className="max-w-lg w-full bg-white rounded-2xl shadow-2xl border border-zinc-200/90 p-6 flex flex-col gap-4 ring-1 ring-black/[0.04]">
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="p-2 bg-rose-50 text-rose-600 border border-rose-100 rounded-xl shrink-0">
+                <AlertTriangle className="w-5 h-5" />
               </div>
-              <h2 className="text-lg font-bold text-slate-900">Spreadsheet Display Error</h2>
+              <h2 className="text-base font-semibold text-zinc-900 tracking-tight">
+                Spreadsheet Display Error
+              </h2>
             </div>
 
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-xs text-zinc-600 leading-relaxed">
               An unexpected error occurred while rendering the spreadsheet canvas. Your file is safe
               and has not been altered. You can reload the page or return to the home screen to open
               another workbook.
             </p>
 
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex items-center gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={this.handleReset}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer"
+                className="flex items-center gap-2 h-8 px-4 bg-blue-600 hover:bg-blue-700 border border-blue-600 text-white text-xs font-medium rounded-lg shadow-xs transition-all active:scale-[0.98] cursor-pointer"
               >
-                <RotateCcw className="w-4 h-4" />
-                Reload Page
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reload Page</span>
               </button>
 
               <button
                 type="button"
                 onClick={this.handleReturnHome}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-slate-200"
+                className="flex items-center gap-2 h-8 px-4 bg-white hover:bg-zinc-50 border border-zinc-200/90 text-zinc-700 text-xs font-medium rounded-lg shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
               >
-                <Home className="w-4 h-4" />
-                Return to Home
+                <Home className="w-3.5 h-3.5 text-zinc-500" />
+                <span>Return to Home</span>
               </button>
             </div>
 
             {this.state.error && (
-              <details className="mt-2 text-xs border border-slate-200 rounded-lg p-3 bg-slate-50 text-slate-700">
-                <summary className="font-semibold cursor-pointer select-none text-slate-600 hover:text-slate-900">
+              <details className="mt-2 text-xs border border-zinc-200 rounded-xl p-3 bg-zinc-50 text-zinc-700">
+                <summary className="font-medium cursor-pointer select-none text-zinc-600 hover:text-zinc-950">
                   Technical Details
                 </summary>
-                <pre className="mt-2 overflow-x-auto font-mono text-[11px] text-red-700 whitespace-pre-wrap">
+                <pre className="mt-2 overflow-x-auto font-mono text-[11px] text-rose-600 whitespace-pre-wrap">
                   {this.state.error.toString()}
                 </pre>
                 {this.state.errorInfo?.componentStack && (
-                  <pre className="mt-1 overflow-x-auto font-mono text-[10px] text-slate-500 whitespace-pre-wrap">
+                  <pre className="mt-1 overflow-x-auto font-mono text-[10px] text-zinc-500 whitespace-pre-wrap">
                     {this.state.errorInfo.componentStack}
                   </pre>
                 )}

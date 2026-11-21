@@ -5,13 +5,15 @@ import {
   FolderOpen,
   ArrowRight,
   ShieldCheck,
-  HelpCircle,
   Sparkles,
   ArrowDownToLine,
   TrendingUp,
   GraduationCap,
   DollarSign,
   Upload,
+  WifiOff,
+  Keyboard,
+  Cpu,
 } from "lucide-react";
 import { SAMPLE_TEMPLATES } from "../utils/sampleData";
 import { GithubIcon } from "./icons/GithubIcon";
@@ -70,64 +72,91 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   return (
     <div
-      className="h-full w-full flex-1 min-h-0 bg-slate-50 text-slate-800 flex flex-col font-sans select-none overflow-y-auto"
+      className="h-full w-full flex-1 min-h-0 bg-zinc-50/50 text-zinc-900 flex flex-col font-sans select-none overflow-y-auto"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {/* Top Navbar */}
-      <header className="shrink-0 h-14 px-6 sm:px-10 flex items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-xs sticky top-0 z-20">
+      {/* Top Navbar: Translucent Sticky Bar */}
+      <header className="shrink-0 h-14 px-4 sm:px-8 flex items-center justify-between border-b border-zinc-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-20">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
-            <FileSpreadsheet className="w-4.5 h-4.5" />
+          {/* WebSheet Logo Mark */}
+          <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs border border-blue-500 ring-1 ring-blue-400/20">
+            <svg
+              className="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect width="18" height="18" x="3" y="3" rx="2.5" className="stroke-blue-200" />
+              <path d="M3 9h18" className="stroke-blue-300" />
+              <path d="M9 3v18" className="stroke-blue-300" />
+              <rect
+                x="4.5"
+                y="4.5"
+                width="3.5"
+                height="3.5"
+                rx="1"
+                fill="currentColor"
+                className="text-white"
+              />
+            </svg>
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-bold text-base text-slate-900 tracking-tight">
-              Web<span className="text-blue-600">Sheet</span>
-            </span>
-            <span className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-              Offline PWA
-            </span>
+
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-sm text-zinc-950 tracking-tight">WebSheet</span>
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium text-zinc-600 bg-zinc-100 border border-zinc-200/80">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Offline PWA</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
+          {/* Chromium PWA Install Button */}
           {deferredInstallPrompt && onInstallClick && (
             <button
               type="button"
               onClick={onInstallClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded-lg transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 h-8 px-3 text-xs font-medium text-zinc-700 bg-white hover:bg-zinc-50 border border-zinc-200/90 rounded-lg transition-all active:scale-[0.98] cursor-pointer shadow-2xs"
               title="Install WebSheet to your device"
             >
-              <ArrowDownToLine className="w-3.5 h-3.5" />
+              <ArrowDownToLine className="w-3.5 h-3.5 text-zinc-600" />
               <span className="hidden sm:inline">Install App</span>
             </button>
           )}
 
+          {/* Privacy Guarantee Pill */}
           <button
             type="button"
             onClick={onOpenPrivacyModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium hover:bg-slate-200/70 transition-colors cursor-pointer"
+            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium text-zinc-700 bg-zinc-50 border border-zinc-200/80 hover:bg-zinc-100 hover:border-zinc-300 transition-all active:scale-[0.98] cursor-pointer shadow-2xs"
             title="100% Client-Side Private"
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-            <span className="hidden sm:inline">Client-Side Private</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-zinc-800" />
+            <span>Client-Side Private</span>
           </button>
 
+          {/* Shortcuts Modal Trigger */}
           <button
             type="button"
             onClick={onOpenShortcutsModal}
-            className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            className="size-8 text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100 rounded-lg transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center"
             title="Shortcuts & Help"
+            aria-label="Keyboard shortcuts"
           >
-            <HelpCircle className="w-4 h-4" />
+            <Keyboard className="w-4 h-4" />
           </button>
 
+          {/* GitHub Link */}
           <a
             href="https://github.com/samithseu/websheet"
             target="_blank"
             rel="noopener noreferrer"
-            className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
+            className="size-8 text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100 rounded-lg transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center"
             title="View source on GitHub"
             aria-label="GitHub repository"
           >
@@ -137,30 +166,34 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-6 sm:px-10 py-10 flex flex-col justify-center gap-10">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-8 py-10 flex flex-col justify-center gap-10">
         {/* Hero Section */}
-        <div className="text-center max-w-2xl mx-auto space-y-3">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-            Spreadsheets, simplified and private
+        <div className="text-center max-w-2xl mx-auto space-y-3.5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium text-zinc-600 bg-zinc-100/80 border border-zinc-200/80 shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+            <span>Zero Server Egress • In-Memory Spreadsheet Engine</span>
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-zinc-900 leading-[1.12]">
+            Spreadsheets, simplified and private.
           </h1>
-          <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-            Create, view, and edit Excel and CSV files directly in your browser. Instant start, zero
-            server uploads, 100% offline.
+          <p className="text-sm sm:text-base text-zinc-600 max-w-xl mx-auto leading-relaxed">
+            Create, view, and edit Excel and CSV files directly in your browser. Instant launch,
+            zero server uploads, 100% offline.
           </p>
         </div>
 
         {/* In-Session Quick Resume Card (if workbook active) */}
         {hasActiveSession && onResumeEditing && (
-          <div className="bg-blue-50/70 border border-blue-200/80 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-xs">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
-                <FileSpreadsheet className="w-5 h-5" />
+          <div className="bg-white border border-zinc-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-2xs hover:border-zinc-300 transition-all">
+            <div className="flex items-center gap-3.5 text-left min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs border border-blue-500 ring-1 ring-blue-400/20">
+                <FileSpreadsheet className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
-                  Open Workbook
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                  Active Session
                 </p>
-                <p className="text-sm font-bold text-slate-900 truncate max-w-xs sm:max-w-md">
+                <p className="text-sm font-semibold text-zinc-900 truncate max-w-xs sm:max-w-md mt-0.5 font-mono">
                   {activeFilename || "Untitled_Spreadsheet.xlsx"}
                 </p>
               </div>
@@ -168,102 +201,126 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <button
               type="button"
               onClick={onResumeEditing}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
+              className="flex items-center gap-2 h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium rounded-lg shadow-xs transition-all active:scale-[0.98] cursor-pointer shrink-0"
             >
               <span>Resume Editing</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
 
-        {/* Primary Action Buttons / Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        {/* Primary Action Bento Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
           {/* 1. Create New Spreadsheet */}
           <button
             type="button"
             onClick={onNewSpreadsheet}
-            className="group relative bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 text-left hover:border-blue-500 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between gap-6"
+            className="group relative bg-white border border-zinc-200/90 rounded-2xl p-6 sm:p-7 text-left hover:border-blue-300 hover:ring-2 hover:ring-blue-600/10 hover:shadow-xs transition-all duration-200 cursor-pointer flex flex-col justify-between gap-6"
           >
             <div className="flex items-start justify-between">
-              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors flex items-center justify-center shadow-2xs">
-                <Plus className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all duration-200 flex items-center justify-center shadow-2xs">
+                <Plus className="w-5 h-5" />
               </div>
-              <span className="text-xs font-semibold text-blue-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-                New Sheet <ArrowRight className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium text-zinc-500 group-hover:text-blue-600 transition-colors flex items-center gap-1">
+                New Sheet{" "}
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </span>
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+              <h2 className="text-base sm:text-lg font-semibold text-zinc-900 group-hover:text-zinc-950 transition-colors">
                 New Spreadsheet
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                Start from scratch with a clean, blank spreadsheet grid.
+              <p className="text-xs sm:text-sm text-zinc-500 mt-1 leading-relaxed">
+                Start from scratch with a clean, unformatted workbook grid.
               </p>
             </div>
           </button>
 
-          {/* 2. Import / Open File */}
+          {/* 2. Import / Open File (with Dropzone & Format Chips) */}
           <button
             type="button"
             onClick={onOpenFileClick}
-            className={`group relative bg-white border rounded-2xl p-6 sm:p-8 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-6 ${
+            className={`group relative rounded-2xl p-6 sm:p-7 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-6 ${
               isDropZoneActive
-                ? "border-blue-500 bg-blue-50/50 shadow-md ring-2 ring-blue-500/20"
-                : "border-slate-200 hover:border-blue-500 hover:shadow-md"
+                ? "border-blue-600 bg-blue-50/40 ring-2 ring-blue-600/20 shadow-md"
+                : "bg-white border border-zinc-200/90 hover:border-blue-300 hover:ring-2 hover:ring-blue-600/10 hover:shadow-xs"
             }`}
           >
             <div className="flex items-start justify-between">
               <div
-                className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-2xs transition-colors ${
+                className={`w-11 h-11 rounded-xl border transition-all duration-200 flex items-center justify-center shadow-2xs ${
                   isDropZoneActive
-                    ? "bg-blue-600 text-white"
-                    : "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white"
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-zinc-100 text-zinc-900 border-zinc-200/80 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600"
                 }`}
               >
                 {isDropZoneActive ? (
-                  <Upload className="w-6 h-6" />
+                  <Upload className="w-5 h-5" />
                 ) : (
-                  <FolderOpen className="w-6 h-6" />
+                  <FolderOpen className="w-5 h-5" />
                 )}
               </div>
-              <span className="text-xs font-semibold text-emerald-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-                Browse or Drop <ArrowRight className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium text-zinc-500 group-hover:text-blue-600 transition-colors flex items-center gap-1">
+                Browse or Drop{" "}
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </span>
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
-                Open Spreadsheet
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                Open .xlsx, .xls, .csv, .tsv, or .ods from your device or drag & drop.
-              </p>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[".xlsx", ".csv", ".ods", ".tsv"].map((ext) => (
+                  <span
+                    key={ext}
+                    className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 border border-zinc-200/60"
+                  >
+                    {ext}
+                  </span>
+                ))}
+              </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-semibold text-zinc-900 group-hover:text-zinc-950 transition-colors">
+                  Open Spreadsheet
+                </h2>
+                <p className="text-xs sm:text-sm text-zinc-500 mt-1 leading-relaxed">
+                  Open local spreadsheet files or drag & drop directly onto this card.
+                </p>
+              </div>
             </div>
           </button>
         </div>
 
         {/* Templates Gallery */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-blue-600" />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700">
-              Start with a template
-            </h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-zinc-900" />
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                Start with a template
+              </h3>
+            </div>
+            <span className="text-[11px] text-zinc-400 font-medium">
+              Ready-to-use formulas & layouts
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
             {SAMPLE_TEMPLATES.map((tmpl) => {
               let IconComponent = FileSpreadsheet;
-              let iconBg = "bg-blue-50 text-blue-600";
+              let categoryTag = "General";
+              let featureBadge = "Formulas";
 
               if (tmpl.id === "monthly-budget") {
                 IconComponent = DollarSign;
-                iconBg = "bg-indigo-50 text-indigo-600";
+                categoryTag = "Personal Finance";
+                featureBadge = "Formulas & Totals";
               } else if (tmpl.id === "sales-tracker") {
                 IconComponent = TrendingUp;
-                iconBg = "bg-emerald-50 text-emerald-600";
+                categoryTag = "Revenue & Pipeline";
+                featureBadge = "Quarterly Sums";
               } else if (tmpl.id === "student-grades") {
                 IconComponent = GraduationCap;
-                iconBg = "bg-amber-50 text-amber-600";
+                categoryTag = "Academic & Grading";
+                featureBadge = "Weighted GPA";
               }
 
               return (
@@ -271,38 +328,164 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   key={tmpl.id}
                   type="button"
                   onClick={() => onSelectTemplate(tmpl.id)}
-                  className="group bg-white border border-slate-200 rounded-xl p-4 text-left hover:border-blue-500 hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between gap-3"
+                  className="group bg-white border border-zinc-200/80 rounded-xl p-4 text-left hover:border-blue-300 hover:ring-2 hover:ring-blue-600/10 hover:shadow-xs transition-all duration-150 cursor-pointer flex flex-col justify-between gap-3.5"
                 >
                   <div className="flex items-center justify-between">
-                    <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconBg}`}
-                    >
+                    <div className="w-8 h-8 rounded-lg bg-zinc-100 border border-zinc-200/60 text-zinc-800 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-colors">
                       <IconComponent className="w-4 h-4" />
                     </div>
-                    {tmpl.id === "monthly-budget" && (
-                      <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/60">
-                        Borders & Formulas
-                      </span>
-                    )}
+                    <span className="text-[10px] font-medium text-zinc-600 bg-zinc-50 border border-zinc-200/60 px-2 py-0.5 rounded-full">
+                      {categoryTag}
+                    </span>
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                    <h4 className="text-xs sm:text-sm font-semibold text-zinc-900 group-hover:text-blue-600 transition-colors">
                       {tmpl.name}
                     </h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
+                    <p className="text-[11px] text-zinc-500 mt-1 line-clamp-2 leading-relaxed">
                       {tmpl.description}
                     </p>
+                  </div>
+                  <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-[10px] text-zinc-400 group-hover:text-blue-600 transition-colors">
+                    <span className="font-mono">{featureBadge}</span>
+                    <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </button>
               );
             })}
           </div>
         </div>
+
+        {/* Value Propositions / Trust Grid (4-card Bento) */}
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center gap-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Architecture & Security Guarantees
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+            {/* Card 1: Zero Server Egress */}
+            <div className="bg-zinc-50/60 border border-zinc-200/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between gap-4 hover:border-zinc-300 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="w-9 h-9 rounded-xl bg-white border border-zinc-200/80 text-zinc-900 flex items-center justify-center shadow-2xs">
+                  <ShieldCheck className="w-4.5 h-4.5 text-zinc-900" />
+                </div>
+                <span className="text-[10px] font-mono font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">
+                  0 network egress
+                </span>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-zinc-900">Client-Side Memory Sandbox</h4>
+                <p className="text-xs text-zinc-600 mt-1 leading-relaxed">
+                  Spreadsheet files and formulas run entirely inside browser RAM. Zero files,
+                  telemetry, or cell data ever touch a remote server or third-party service.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 2: Offline-First PWA */}
+            <div className="bg-zinc-50/60 border border-zinc-200/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between gap-4 hover:border-zinc-300 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="w-9 h-9 rounded-xl bg-white border border-zinc-200/80 text-zinc-900 flex items-center justify-center shadow-2xs">
+                  <WifiOff className="w-4.5 h-4.5 text-zinc-900" />
+                </div>
+                <span className="text-[10px] font-mono font-medium text-zinc-700 bg-zinc-100 border border-zinc-200/60 px-2 py-0.5 rounded-full">
+                  App shell cached
+                </span>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-zinc-900">Offline & Installable PWA</h4>
+                <p className="text-xs text-zinc-600 mt-1 leading-relaxed">
+                  Precached via modern Service Worker. Install as a standalone desktop or mobile
+                  application and work seamlessly without an internet connection.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 3: SheetJS High-Fidelity Engine */}
+            <div className="bg-zinc-50/60 border border-zinc-200/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between gap-4 hover:border-zinc-300 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="w-9 h-9 rounded-xl bg-white border border-zinc-200/80 text-zinc-900 flex items-center justify-center shadow-2xs">
+                  <Cpu className="w-4.5 h-4.5 text-zinc-900" />
+                </div>
+                <span className="font-mono text-[10px] text-zinc-600 bg-zinc-100 border border-zinc-200/60 px-2 py-0.5 rounded-full">
+                  .xlsx • .csv • .ods • .tsv
+                </span>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-zinc-900">
+                  High-Fidelity Translation Engine
+                </h4>
+                <p className="text-xs text-zinc-600 mt-1 leading-relaxed">
+                  Hardened SheetJS translation layer supporting merges, formula evaluations,
+                  multiline auto-fit, and export roundtripping without data corruption.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 4: Keyboard-First Workflow */}
+            <div className="bg-zinc-50/60 border border-zinc-200/80 rounded-2xl p-5 sm:p-6 flex flex-col justify-between gap-4 hover:border-zinc-300 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="w-9 h-9 rounded-xl bg-white border border-zinc-200/80 text-zinc-900 flex items-center justify-center shadow-2xs">
+                  <Keyboard className="w-4.5 h-4.5 text-zinc-900" />
+                </div>
+                <span className="text-[10px] font-mono font-medium text-zinc-700 bg-zinc-100 border border-zinc-200/60 px-2 py-0.5 rounded-full">
+                  Universal hotkeys
+                </span>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-zinc-900">
+                  Keyboard-First & Sandboxed PDF
+                </h4>
+                <p className="text-xs text-zinc-600 mt-1 leading-relaxed">
+                  Universal hotkeys (⌘S, ⌘O, ⌘F, ⌘P), multi-cell aggregate calculations (SUM, AVG,
+                  MIN, MAX), and sandboxed iframe virtual print engine.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
 
-      {/* Footer */}
-      <footer className="shrink-0 py-6 text-center text-xs text-slate-500 border-t border-slate-200/80 bg-white">
-        <p>100% Client-Side Private • Spreadsheets never leave your computer • Works Offline</p>
+      {/* Minimalist Typographic Footer */}
+      <footer className="shrink-0 py-6 border-t border-zinc-200/80 bg-white/60">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-zinc-800">WebSheet</span>
+            <span className="text-zinc-300">•</span>
+            <span>100% Client-Side Private</span>
+            <span className="text-zinc-300">•</span>
+            <span className="font-mono text-[11px] text-zinc-400 bg-zinc-100 border border-zinc-200/60 px-1.5 py-0.5 rounded">
+              v1.0.0
+            </span>
+          </div>
+
+          <div className="flex items-center gap-4 text-xs font-medium text-zinc-600">
+            <button
+              type="button"
+              onClick={onOpenPrivacyModal}
+              className="hover:text-zinc-950 transition-all active:scale-[0.98] cursor-pointer"
+            >
+              Privacy Guarantee
+            </button>
+            <button
+              type="button"
+              onClick={onOpenShortcutsModal}
+              className="hover:text-zinc-950 transition-all active:scale-[0.98] cursor-pointer"
+            >
+              Shortcuts
+            </button>
+            <a
+              href="https://github.com/samithseu/websheet"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-zinc-950 transition-all active:scale-[0.98]"
+            >
+              GitHub
+            </a>
+          </div>
+        </div>
       </footer>
     </div>
   );

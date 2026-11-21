@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { X, Search, Replace, ChevronDown, ChevronUp } from "lucide-react";
+import { X, Search, ChevronDown, ChevronUp } from "lucide-react";
 import type { XSpreadsheetData } from "../utils/spreadsheetConverter";
 import {
   searchWorkbook,
@@ -121,20 +121,20 @@ export const FindReplaceDialog: React.FC<FindReplaceDialogProps> = ({
       onClose={handleClose}
       className="outline-none"
     >
-      <div className="bg-white rounded-xl shadow-2xl w-[90vw] max-w-md overflow-hidden border border-slate-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-[90vw] max-w-md overflow-hidden border border-zinc-200/90 ring-1 ring-black/[0.04]">
         {/* Header */}
-        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-              <Search className="w-4 h-4" />
+        <div className="px-5 py-3.5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7.5 h-7.5 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+              <Search className="w-3.5 h-3.5" />
             </div>
-            <h2 className="text-sm font-semibold text-slate-800">Find & Replace</h2>
+            <h2 className="text-sm font-semibold text-zinc-900 tracking-tight">Find & Replace</h2>
           </div>
           <form method="dialog">
             <button
               type="submit"
               onClick={handleClose}
-              className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition-colors cursor-pointer"
+              className="size-7 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg flex items-center justify-center transition-all active:scale-[0.98] cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -144,8 +144,8 @@ export const FindReplaceDialog: React.FC<FindReplaceDialogProps> = ({
         {/* Form Body */}
         <div className="p-5 space-y-4 text-xs">
           {/* Find */}
-          <div className="space-y-1">
-            <label className="font-medium text-slate-700 block">Find</label>
+          <div className="space-y-1.5">
+            <label className="font-medium text-zinc-700 block">Find</label>
             <div className="relative flex items-center">
               <input
                 type="text"
@@ -153,47 +153,39 @@ export const FindReplaceDialog: React.FC<FindReplaceDialogProps> = ({
                 onChange={(e) => {
                   setFindText(e.target.value);
                   setCurrentIndex(0);
-                  setStatusMessage(null);
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleNext();
-                  }
+                  if (e.key === "Enter") handleNext();
                 }}
-                placeholder="Text or number to find..."
+                placeholder="Search text or formula..."
+                className="w-full px-3 py-2 bg-zinc-50/70 border border-zinc-200/90 rounded-lg text-xs font-sans text-zinc-900 placeholder:text-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-500 transition-all pr-20 shadow-2xs"
                 autoFocus
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-sans focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-16"
               />
-              {matches.length > 0 && (
-                <span className="absolute right-2.5 text-[11px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                  {safeIndex + 1}/{matches.length}
-                </span>
+              {findText.trim() && (
+                <div className="absolute right-2 flex items-center gap-1">
+                  <span className="text-[10px] font-mono font-medium tabular-nums text-zinc-500 bg-zinc-100 border border-zinc-200/80 px-1.5 py-0.5 rounded-md">
+                    {matches.length > 0 ? `${safeIndex + 1}/${matches.length}` : "0"}
+                  </span>
+                </div>
               )}
             </div>
           </div>
 
           {/* Replace */}
-          <div className="space-y-1">
-            <label className="font-medium text-slate-700 block">Replace with</label>
+          <div className="space-y-1.5">
+            <label className="font-medium text-zinc-700 block">Replace with</label>
             <input
               type="text"
               value={replaceText}
               onChange={(e) => setReplaceText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleReplaceCurrent();
-                }
-              }}
               placeholder="Replacement text..."
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-sans focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 bg-zinc-50/70 border border-zinc-200/90 rounded-lg text-xs font-sans text-zinc-900 placeholder:text-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-500 transition-all shadow-2xs"
             />
           </div>
 
           {/* Options */}
-          <div className="flex items-center gap-4 pt-1">
-            <label className="flex items-center gap-2 cursor-pointer select-none text-slate-600">
+          <div className="flex items-center justify-between pt-1">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-zinc-700">
               <input
                 type="checkbox"
                 checked={matchCase}
@@ -201,68 +193,94 @@ export const FindReplaceDialog: React.FC<FindReplaceDialogProps> = ({
                   setMatchCase(e.target.checked);
                   setCurrentIndex(0);
                 }}
-                className="rounded text-blue-600 focus:ring-blue-500"
+                className="rounded border-zinc-300 text-blue-600 focus:ring-blue-600 w-3.5 h-3.5 cursor-pointer"
               />
               <span>Match case</span>
             </label>
-          </div>
 
-          {/* Feedback & Match coordinates */}
-          {(statusMessage || (matches.length > 0 && safeIndex >= 0)) && (
-            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 font-medium text-[11px] flex items-center justify-between">
-              <span>
-                {statusMessage || `${matches.length} match${matches.length > 1 ? "es" : ""} found`}
-              </span>
-              {matches.length > 0 && safeIndex >= 0 && (
-                <span className="font-mono text-blue-700 font-semibold">
-                  {matches[safeIndex].sheetName} ! {matches[safeIndex].cellRef}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-            <div className="flex items-center gap-1.5">
+            {/* Navigation buttons */}
+            <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={handlePrev}
                 disabled={matches.length === 0}
-                className="p-1.5 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="size-7 text-zinc-600 border border-zinc-200/90 bg-white hover:bg-zinc-50 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all active:scale-[0.98] flex items-center justify-center cursor-pointer"
                 title="Previous match"
               >
-                <ChevronUp className="w-4 h-4" />
+                <ChevronUp className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
                 onClick={handleNext}
                 disabled={matches.length === 0}
-                className="p-1.5 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="size-7 text-zinc-600 border border-zinc-200/90 bg-white hover:bg-zinc-50 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all active:scale-[0.98] flex items-center justify-center cursor-pointer"
                 title="Next match"
               >
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className="w-3.5 h-3.5" />
               </button>
             </div>
+          </div>
 
-            <div className="flex items-center gap-2">
+          {/* Active Match Details */}
+          {matches.length > 0 && safeIndex >= 0 && (
+            <div className="p-2.5 rounded-lg bg-zinc-50 border border-zinc-200/80 text-zinc-600 text-[11px] flex items-center justify-between">
+              <span>
+                Match at sheet{" "}
+                <strong className="text-zinc-900 font-semibold">
+                  {matches[safeIndex].sheetName}
+                </strong>
+                , cell{" "}
+                <strong className="text-zinc-900 font-mono font-semibold">
+                  {matches[safeIndex].cellRef}
+                </strong>
+              </span>
               <button
                 type="button"
-                onClick={handleReplaceCurrent}
-                disabled={matches.length === 0 || safeIndex < 0}
-                className="flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                onClick={() => navigateToMatch(safeIndex)}
+                className="text-blue-600 hover:underline font-medium cursor-pointer"
               >
-                <Replace className="w-3.5 h-3.5" />
-                <span>Replace</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleReplaceAll}
-                disabled={!findText.trim()}
-                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                Replace All
+                Jump to cell
               </button>
             </div>
+          )}
+
+          {/* Status Message */}
+          {statusMessage && (
+            <div className="p-2 text-center text-[11px] font-medium text-zinc-700 bg-zinc-100 rounded-lg">
+              {statusMessage}
+            </div>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="px-5 py-3 border-t border-zinc-100 bg-zinc-50/50 flex items-center justify-between text-xs">
+          <form method="dialog">
+            <button
+              type="submit"
+              onClick={handleClose}
+              className="h-8 px-3.5 font-medium text-zinc-700 bg-white border border-zinc-200/90 rounded-lg hover:bg-zinc-50 transition-all active:scale-[0.98] shadow-2xs cursor-pointer"
+            >
+              Close
+            </button>
+          </form>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleReplaceCurrent}
+              disabled={matches.length === 0}
+              className="h-8 px-3 font-medium text-zinc-700 bg-white border border-zinc-200/90 rounded-lg hover:bg-zinc-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
+            >
+              Replace
+            </button>
+            <button
+              type="button"
+              onClick={handleReplaceAll}
+              disabled={matches.length === 0}
+              className="h-8 px-3.5 font-medium text-white bg-blue-600 hover:bg-blue-700 border border-blue-600 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+            >
+              Replace All
+            </button>
           </div>
         </div>
       </div>

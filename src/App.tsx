@@ -536,7 +536,7 @@ export function App() {
   }, [handleExport, handleOpenFileClick, handlePrint, currentView]);
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-slate-50 font-sans">
+    <div className="w-full h-full flex flex-col overflow-hidden bg-zinc-50 font-sans">
       {/* Hidden File Input for Open File picker fallback */}
       <input
         type="file"
@@ -667,12 +667,12 @@ export function App() {
         role="status"
         aria-live="polite"
         aria-atomic="true"
-        className="fixed bottom-10 right-6 z-50 pointer-events-none"
+        className="fixed bottom-8 right-6 z-50 pointer-events-none"
       >
         {toastMessage && (
-          <div className="bg-slate-900 text-white text-xs px-4 py-2.5 rounded-lg shadow-xl flex items-center gap-2 pointer-events-auto border border-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-150">
-            <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
-            <span>{toastMessage}</span>
+          <div className="bg-zinc-900 text-white text-xs px-4 py-2.5 rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.18)] flex items-center gap-2.5 pointer-events-auto border border-zinc-800 animate-in fade-in slide-in-from-bottom-2 duration-150">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 animate-pulse" />
+            <span className="font-medium text-zinc-100">{toastMessage}</span>
           </div>
         )}
       </div>

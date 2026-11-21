@@ -1,5 +1,46 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --color-background: #ffffff;
+  --color-foreground: #09090b;
+  --color-card: #ffffff;
+  --color-card-foreground: #09090b;
+  --color-border: #e4e4e7;
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #71717a;
+  --color-accent: #f4f4f5;
+  --color-accent-foreground: #09090b;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-active: #1e40af;
+  --color-primary-foreground: #ffffff;
+
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --border: #e4e4e7;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #09090b;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --radius: 0.5rem;
+}
+
 html,
 body,
 #root {
@@ -8,16 +49,19 @@ body,
   margin: 0;
   padding: 0;
   overflow: hidden;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: #f8fafc;
-  color: #0f172a;
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+  font-variant-numeric: tabular-nums;
+  background-color: #fafafa;
+  color: #09090b;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Thin scrollbars across all scrollable containers (CSS Baseline) */
+/* Thin neutral scrollbars across all scrollable containers */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: #d4d4d8 transparent;
 }
 
 /* Scrollbar stability: prevent horizontal layout shifts when scrollbars appear */
@@ -30,11 +74,12 @@ dialog .overflow-y-auto {
 .x-spreadsheet-scrollbar.horizontal,
 .x-spreadsheet-scrollbar.vertical {
   scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 transparent;
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -42,24 +87,26 @@ dialog .overflow-y-auto {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
-  border-radius: 4px;
+  background-color: #d4d4d8;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #94a3b8;
+  background-color: #a1a1aa;
 }
 
 /* Opaque cell editor overlay to prevent canvas text show-through */
 .x-spreadsheet-editor .x-spreadsheet-editor-area,
 .x-spreadsheet-editor .x-spreadsheet-editor-area textarea {
   background-color: #ffffff !important;
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
 }
 
-/* Custom enhancements for x-spreadsheet UI - Light Instrument */
+/* x-spreadsheet UI - Zinc Instrument Theme */
 .x-spreadsheet {
   font-family: inherit !important;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #e4e4e7;
 }
 
 /* Suppress legacy x-spreadsheet print overlay in favor of WebSheet's unified PrintDialog */
@@ -69,7 +116,7 @@ dialog .overflow-y-auto {
 
 .x-spreadsheet-toolbar {
   background-color: #ffffff !important;
-  border-bottom: 1px solid #e2e8f0 !important;
+  border-bottom: 1px solid #e4e4e7 !important;
   height: 38px !important;
   padding: 0 12px !important;
   display: flex !important;
@@ -78,22 +125,26 @@ dialog .overflow-y-auto {
 
 .x-spreadsheet-toolbar-btn {
   border-radius: 6px !important;
+  color: #52525b !important;
   transition:
     background-color 0.15s ease,
+    color 0.15s ease,
     border-color 0.15s ease !important;
 }
 
 .x-spreadsheet-toolbar-btn:hover {
-  background-color: #f1f5f9 !important;
+  background-color: #f4f4f5 !important;
+  color: #18181b !important;
 }
 
 .x-spreadsheet-toolbar-btn.active {
-  background-color: #e2e8f0 !important;
+  background-color: #e4e4e7 !important;
+  color: #18181b !important;
 }
 
 .x-spreadsheet-bottombar {
   background-color: #ffffff !important;
-  border-top: 1px solid #e2e8f0 !important;
+  border-top: 1px solid #e4e4e7 !important;
   height: 36px !important;
   padding: 0 12px !important;
 }
@@ -103,18 +154,23 @@ dialog .overflow-y-auto {
   height: 34px !important;
   border-radius: 6px 6px 0 0 !important;
   font-weight: 500 !important;
-  color: #475569 !important;
+  color: #71717a !important;
   transition: all 0.15s ease !important;
 }
 
+.x-spreadsheet-bottombar .x-spreadsheet-menu > li:hover {
+  background-color: #f4f4f5 !important;
+  color: #18181b !important;
+}
+
 .x-spreadsheet-bottombar .x-spreadsheet-menu > li.active {
-  background: #f8fafc !important;
+  background: #ffffff !important;
   color: #2563eb !important;
   border-bottom: 2px solid #2563eb !important;
   font-weight: 600 !important;
 }
 
-/* Native <dialog> resets and animations */
+/* Native <dialog> resets, backdrops, and spring animations */
 dialog {
   padding: 0;
   border: none;
@@ -124,8 +180,9 @@ dialog {
 }
 
 dialog::backdrop {
-  background-color: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(3px);
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 dialog[open] {
@@ -148,7 +205,7 @@ dialog[open] {
   margin: 0;
   padding: 0;
   border: none;
-  background-color: #ffffff !important;
+  background: transparent !important;
   color: inherit;
   inset: unset;
   overflow: visible;
@@ -161,11 +218,11 @@ dialog[open] {
 @keyframes popover-fade-in {
   from {
     opacity: 0;
-    transform: translateY(-3px);
+    transform: translateY(-4px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 

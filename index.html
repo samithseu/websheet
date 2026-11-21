@@ -4,15 +4,22 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/pwa-192x192.png" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#fafafa" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
       content="WebSheet — Fast, 100% private in-browser spreadsheet editor. Read, edit, and export spreadsheets locally with zero server uploads."
     />
+    <!-- Typography: Geist, Geist Mono, Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <title>WebSheet — 100% Private In-Browser Spreadsheet Editor</title>
   </head>
-  <body>
+  <body class="bg-zinc-50 text-zinc-900 antialiased selection:bg-zinc-900 selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -61,28 +61,28 @@ export const FormulaBar: React.FC<FormulaBarProps> = ({
   };
 
   return (
-    <div className="no-print h-9 px-3 bg-white border-b border-slate-200 flex items-center justify-between gap-2 shrink-0 select-none text-xs">
+    <div className="no-print h-9 px-3 bg-white/95 backdrop-blur-xs border-b border-zinc-200/80 flex items-center justify-between gap-3 shrink-0 select-none text-xs">
       {/* Left: Coordinate + fx + Formula Input */}
       <div className="flex items-center gap-1.5 flex-1 max-w-4xl min-w-0">
         {/* Cell Coordinate Badge */}
         <div
-          className="h-6 px-2.5 bg-slate-50 border border-slate-200 rounded-md font-mono font-semibold text-slate-700 flex items-center justify-center min-w-13 text-center"
+          className="h-6.5 px-2.5 bg-zinc-100/90 border border-zinc-200 rounded-lg font-mono font-semibold text-zinc-800 flex items-center justify-center min-w-13 text-center text-xs tracking-tight tabular-nums shadow-2xs"
           title="Active cell reference"
         >
           {activeCellCoord || "A1"}
         </div>
 
-        {/* fx button */}
+        {/* fx button with tactile micro-interaction */}
         <button
           type="button"
           onClick={onOpenFormulaGuide}
-          className="h-6 px-2 rounded-md text-blue-600 bg-blue-50 hover:bg-blue-100 font-semibold text-xs flex items-center justify-center border border-blue-200 transition-colors cursor-pointer"
+          className="h-6.5 px-2 rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100/80 active:scale-[0.98] border border-blue-200/60 font-mono text-xs font-semibold flex items-center justify-center transition-all shadow-2xs cursor-pointer"
           title="Insert formula or open reference guide"
         >
           fx
         </button>
 
-        <div className="h-4 w-px bg-slate-200 mx-0.5" />
+        <div className="h-4 w-px bg-zinc-200 mx-0.5" />
 
         {/* Formula Input */}
         <input
@@ -96,47 +96,47 @@ export const FormulaBar: React.FC<FormulaBarProps> = ({
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
           placeholder="Enter text, number, or formula starting with '='"
-          className="flex-1 h-6.5 px-2 text-xs font-mono text-slate-800 bg-white border border-slate-200 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-slate-400 placeholder:font-sans"
+          className="flex-1 h-6.5 px-2.5 text-xs font-mono text-zinc-900 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-500 transition-all placeholder:text-zinc-400 placeholder:font-sans shadow-2xs"
         />
       </div>
 
-      {/* Right: Selection Quick Statistics */}
+      {/* Right: Selection Quick Statistics Chips with Tabular Figures */}
       {selectionStats && selectionStats.count > 1 && (
-        <div className="hidden lg:flex items-center gap-2 text-[11px] text-slate-600 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200 shrink-0 font-medium">
+        <div className="hidden lg:flex items-center gap-2.5 text-[11px] text-zinc-500 bg-zinc-50 border border-zinc-200/80 px-2.5 py-1 rounded-full shadow-2xs shrink-0 font-medium">
           <span>
             Count:{" "}
-            <strong className="font-semibold text-slate-800 font-mono">
+            <strong className="font-semibold text-zinc-800 font-mono tabular-nums">
               {selectionStats.count}
             </strong>
           </span>
 
           {selectionStats.numericCount > 0 && (
             <>
-              <div className="h-3 w-px bg-slate-200" />
+              <div className="h-3 w-px bg-zinc-200" />
               <span>
                 Sum:{" "}
-                <strong className="font-semibold text-blue-700 font-mono">
+                <strong className="font-semibold text-zinc-950 font-mono tabular-nums">
                   {formatNumber(selectionStats.sum)}
                 </strong>
               </span>
-              <div className="h-3 w-px bg-slate-200" />
+              <div className="h-3 w-px bg-zinc-200" />
               <span>
                 Avg:{" "}
-                <strong className="font-semibold text-slate-800 font-mono">
+                <strong className="font-semibold text-zinc-800 font-mono tabular-nums">
                   {formatNumber(selectionStats.avg)}
                 </strong>
               </span>
-              <div className="h-3 w-px bg-slate-200" />
+              <div className="h-3 w-px bg-zinc-200" />
               <span>
                 Min:{" "}
-                <strong className="font-semibold text-slate-800 font-mono">
+                <strong className="font-semibold text-zinc-800 font-mono tabular-nums">
                   {formatNumber(selectionStats.min)}
                 </strong>
               </span>
-              <div className="h-3 w-px bg-slate-200" />
+              <div className="h-3 w-px bg-zinc-200" />
               <span>
                 Max:{" "}
-                <strong className="font-semibold text-slate-800 font-mono">
+                <strong className="font-semibold text-zinc-800 font-mono tabular-nums">
                   {formatNumber(selectionStats.max)}
                 </strong>
               </span>
