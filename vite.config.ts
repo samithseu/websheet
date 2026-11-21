@@ -35,7 +35,7 @@ export default defineConfig({
   },
   plugins: lazyPlugins(() => [
     tailwindcss(),
-    react(),
+    react({ compiler: true }),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: [
