@@ -1,11 +1,41 @@
+import { execSync } from "node:child_process";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig, lazyPlugins } from "vite-plus";
 import path from "path";
 
+function getCommitHash(): string {
+  // 1. Explicit override
+  if (process.env.VITE_COMMIT_HASH) {
+    return process.env.VITE_COMMIT_HASH.trim().slice(0, 7);
+  }
+
+  // 2. CI environment variables
+  const ciSha =
+    process.env.GITHUB_SHA || process.env.CF_PAGES_COMMIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA;
+
+  if (ciSha) {
+    return ciSha.slice(0, 7);
+  }
+
+  // 3. Local git repository
+  try {
+    return execSync("git rev-parse --short HEAD", {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    // 4. Safe fallback when .git is absent (zip download, Docker, etc.)
+    return "dev";
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    "import.meta.env.VITE_COMMIT_HASH": JSON.stringify(getCommitHash()),
+  },
   staged: {
     "*": "vp check --fix",
   },

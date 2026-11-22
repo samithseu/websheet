@@ -16,6 +16,7 @@ import {
   Cpu,
 } from "lucide-react";
 import { SAMPLE_TEMPLATES } from "../utils/sampleData";
+import { APP_VERSION, COMMIT_HASH, COMMIT_URL, isDevCommit, REPO_URL } from "../utils/version";
 import { GithubIcon } from "./icons/GithubIcon";
 import { WebSheetLogo } from "./icons/WebSheetLogo";
 
@@ -426,14 +427,38 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       {/* Minimalist Typographic Footer */}
       <footer className="shrink-0 py-6 border-t border-zinc-200/80 bg-white/60">
-        <div className="max-w-5xl mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-zinc-800">WebSheet</span>
-            <span className="text-zinc-300">•</span>
-            <span>100% Client-Side Private</span>
-            <span className="text-zinc-300">•</span>
-            <span className="font-mono text-[11px] text-zinc-400 bg-zinc-100 border border-zinc-200/60 px-1.5 py-0.5 rounded">
-              v1.0.0
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-2 gap-y-1 text-center sm:text-left">
+            <span className="font-semibold text-zinc-800 tracking-tight">WebSheet</span>
+            <span className="text-zinc-300 select-none" aria-hidden="true">
+              •
+            </span>
+            <span className="text-zinc-600">100% Client-Side Private</span>
+            <span className="text-zinc-300 select-none" aria-hidden="true">
+              •
+            </span>
+            <span className="inline-flex items-center gap-1 font-mono text-[11px] text-zinc-600 bg-zinc-100/90 border border-zinc-200/80 px-2 py-0.5 rounded shadow-2xs">
+              <span className="tabular-nums">v{APP_VERSION}</span>
+              <span className="text-zinc-400 select-none" aria-hidden="true">
+                (
+              </span>
+              {isDevCommit ? (
+                <span className="tabular-nums text-zinc-500">dev</span>
+              ) : (
+                <a
+                  href={COMMIT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Git commit: ${COMMIT_HASH} (View on GitHub)`}
+                  aria-label={`View git commit ${COMMIT_HASH} on GitHub`}
+                  className="tabular-nums text-zinc-600 hover:text-zinc-950 underline-offset-2 hover:underline transition-colors rounded-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400"
+                >
+                  {COMMIT_HASH}
+                </a>
+              )}
+              <span className="text-zinc-400 select-none" aria-hidden="true">
+                )
+              </span>
             </span>
           </div>
 
@@ -441,22 +466,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <button
               type="button"
               onClick={onOpenPrivacyModal}
-              className="hover:text-zinc-950 transition-all active:scale-[0.98] cursor-pointer"
+              className="hover:text-zinc-950 transition-colors active:scale-[0.98] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 rounded-sm"
             >
               Privacy Guarantee
             </button>
             <button
               type="button"
               onClick={onOpenShortcutsModal}
-              className="hover:text-zinc-950 transition-all active:scale-[0.98] cursor-pointer"
+              className="hover:text-zinc-950 transition-colors active:scale-[0.98] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 rounded-sm"
             >
               Shortcuts
             </button>
             <a
-              href="https://github.com/samithseu/websheet"
+              href={REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-zinc-950 transition-all active:scale-[0.98]"
+              className="hover:text-zinc-950 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 rounded-sm"
             >
               GitHub
             </a>
