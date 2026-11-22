@@ -2,22 +2,108 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
-    <meta name="theme-color" content="#fafafa" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary Metadata -->
+    <title>WebSheet — 100% Private In-Browser Spreadsheet Editor</title>
     <meta
       name="description"
-      content="WebSheet — Fast, 100% private in-browser spreadsheet editor. Read, edit, and export spreadsheets locally with zero server uploads."
+      content="WebSheet is a fast, 100% private in-browser spreadsheet editor. Open, edit, and export Excel (.xlsx) and CSV files locally with zero server uploads or tracking."
     />
-    <!-- Typography: Geist, Geist Mono, Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
+    <meta
+      name="keywords"
+      content="spreadsheet, excel editor, csv editor, pwa, client-side, private spreadsheet, sheetjs, xlsx viewer, offline spreadsheet, web spreadsheet, formula editor, in-memory table"
     />
-    <title>WebSheet — 100% Private In-Browser Spreadsheet Editor</title>
+    <meta name="author" content="Samith Seu" />
+    <meta name="creator" content="Samith Seu" />
+    <meta name="publisher" content="WebSheet" />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <link rel="canonical" href="https://samithseu.github.io/websheet/" />
+
+    <!-- Favicon & Touch Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+
+    <!-- PWA & Mobile Web App Capabilities -->
+    <meta name="theme-color" content="#fafafa" />
+    <meta name="color-scheme" content="light" />
+    <meta name="apple-mobile-web-app-title" content="WebSheet" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Open Graph / Facebook / LinkedIn / Discord -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="WebSheet" />
+    <meta property="og:title" content="WebSheet — 100% Private In-Browser Spreadsheet Editor" />
+    <meta
+      property="og:description"
+      content="Fast, zero-server spreadsheet editor that runs entirely in your browser. Open, edit, and export Excel (.xlsx) and CSV files locally with complete privacy and offline support."
+    />
+    <meta property="og:url" content="https://samithseu.github.io/websheet/" />
+    <meta property="og:image" content="https://samithseu.github.io/websheet/og-image.png" />
+    <meta
+      property="og:image:secure_url"
+      content="https://samithseu.github.io/websheet/og-image.png"
+    />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="WebSheet — 100% Private In-Browser Spreadsheet Editor" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="WebSheet — 100% Private In-Browser Spreadsheet Editor" />
+    <meta
+      name="twitter:description"
+      content="Fast, zero-server spreadsheet editor that runs entirely in your browser. Open, edit, and export Excel (.xlsx) and CSV files offline with zero telemetry."
+    />
+    <meta name="twitter:image" content="https://samithseu.github.io/websheet/og-image.png" />
+    <meta name="twitter:image:alt" content="WebSheet — Private In-Browser Spreadsheet" />
+
+    <!-- Schema.org JSON-LD Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "WebSheet",
+        "alternateName": "WebSheet PWA",
+        "url": "https://samithseu.github.io/websheet/",
+        "description": "Fast, 100% private in-browser spreadsheet editor. Read, edit, and export spreadsheets locally with zero server uploads.",
+        "applicationCategory": "ProductivityApplication",
+        "applicationSubCategory": "Spreadsheet",
+        "operatingSystem": "All modern web browsers (Chrome, Firefox, Safari, Edge)",
+        "browserRequirements": "Requires JavaScript and HTML5 Canvas & File API support.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "100% Client-Side In-Memory Execution (Zero Data Egress)",
+          "Offline-first PWA with Service Worker Shell Pre-caching",
+          "Full Excel (.xlsx, .xls) and CSV/TSV/ODS Import and Export",
+          "Interactive Canvas Formula Grid with SUM, AVERAGE, MIN, MAX, IF, AND, OR, CONCAT",
+          "Formula Preserving Engine for Unsupported Functions",
+          "Multi-sheet Workbook Support and Search & Replace",
+          "Virtual Print Engine with Paper Margin & Layout Virtualization",
+          "File System Access API Direct Saving"
+        ],
+        "screenshot": "https://samithseu.github.io/websheet/og-image.png",
+        "softwareVersion": "1.0.0",
+        "author": {
+          "@type": "Person",
+          "name": "Samith Seu",
+          "url": "https://github.com/samithseu"
+        },
+        "license": "https://opensource.org/licenses/MIT"
+      }
+    </script>
   </head>
   <body class="bg-zinc-50 text-zinc-900 antialiased selection:bg-zinc-900 selection:text-white">
     <div id="root"></div>

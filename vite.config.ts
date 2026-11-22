@@ -73,6 +73,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,ico,png,svg}"],
+        globIgnores: ["**/og-image.*"],
         navigateFallback: null,
         cleanupOutdatedCaches: true,
         clientsClaim: true,
