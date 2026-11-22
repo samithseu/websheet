@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { SAMPLE_TEMPLATES } from "../utils/sampleData";
 import { GithubIcon } from "./icons/GithubIcon";
+import { WebSheetLogo } from "./icons/WebSheetLogo";
 
 interface HeaderProps {
   filename: string;
@@ -147,9 +148,10 @@ export const Header: React.FC<HeaderProps> = ({
             className="group flex items-center gap-2 cursor-pointer transition-all active:scale-95"
             title="Return to Home Screen"
           >
-            <div className="w-7.5 h-7.5 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs border border-blue-500 ring-1 ring-blue-400/20 group-hover:bg-blue-700 transition-colors">
-              <FileSpreadsheet className="w-4 h-4 text-white" />
-            </div>
+            <WebSheetLogo
+              size={30}
+              className="shrink-0 transition-transform group-hover:scale-105"
+            />
             <span className="font-semibold text-sm tracking-tight text-zinc-950 hidden sm:inline">
               Web<span className="text-zinc-500 font-normal">Sheet</span>
             </span>

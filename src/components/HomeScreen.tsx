@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { SAMPLE_TEMPLATES } from "../utils/sampleData";
 import { GithubIcon } from "./icons/GithubIcon";
+import { WebSheetLogo } from "./icons/WebSheetLogo";
 
 export interface HomeScreenProps {
   onNewSpreadsheet: () => void;
@@ -81,30 +82,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <header className="shrink-0 h-14 px-4 sm:px-8 flex items-center justify-between border-b border-zinc-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-20">
         <div className="flex items-center gap-3">
           {/* WebSheet Logo Mark */}
-          <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs border border-blue-500 ring-1 ring-blue-400/20">
-            <svg
-              className="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect width="18" height="18" x="3" y="3" rx="2.5" className="stroke-blue-200" />
-              <path d="M3 9h18" className="stroke-blue-300" />
-              <path d="M9 3v18" className="stroke-blue-300" />
-              <rect
-                x="4.5"
-                y="4.5"
-                width="3.5"
-                height="3.5"
-                rx="1"
-                fill="currentColor"
-                className="text-white"
-              />
-            </svg>
-          </div>
+          <WebSheetLogo size={32} className="shrink-0" />
 
           <div className="flex items-center gap-2">
             <span className="font-semibold text-sm text-zinc-950 tracking-tight">WebSheet</span>
@@ -186,9 +164,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {hasActiveSession && onResumeEditing && (
           <div className="bg-white border border-zinc-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-2xs hover:border-zinc-300 transition-all">
             <div className="flex items-center gap-3.5 text-left min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs border border-blue-500 ring-1 ring-blue-400/20">
-                <FileSpreadsheet className="w-5 h-5 text-white" />
-              </div>
+              <WebSheetLogo size={40} className="shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
                   Active Session
